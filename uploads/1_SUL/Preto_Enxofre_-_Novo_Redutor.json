@@ -1,0 +1,296 @@
+{
+  "etapas": [
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Água Quente, 1:7",
+        "temperatura": 40,
+        "tempo": 3
+      },
+      "tipo": "Encher Máquina"
+    },
+    {
+      "dados": {
+        "agua": "Retorno",
+        "gradiente": 0,
+        "resumo": "Seq A, água Retorno",
+        "sequencia": "A",
+        "temperatura": 40,
+        "tempo": 2
+      },
+      "tipo": "Injetar Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Carregar máquina",
+        "temperatura": 40,
+        "tempo": 5
+      },
+      "tipo": "Aviso"
+    },
+    {
+      "dados": {
+        "agua": "Retorno",
+        "gradiente": 0,
+        "resumo": "Seq B, Dosagem: 3 min, curva Circulação, água Retorno",
+        "sequencia": "B",
+        "temperatura": 40,
+        "tempo": 3
+      },
+      "tipo": "Dosagem de Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Aquecer de 40→70°C, 0°C/min",
+        "temperatura": 70,
+        "tempo": 6
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "70°C por 3 min",
+        "temperatura": 70,
+        "tempo": 3
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "agua": "Retorno",
+        "gradiente": 0,
+        "resumo": "Seq C, Dosagem: 5 min, água Retorno",
+        "sequencia": "C",
+        "temperatura": 70,
+        "tempo": 5
+      },
+      "tipo": "Dosagem de Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Aquecer de 70→80°C, 0°C/min",
+        "temperatura": 80,
+        "tempo": 2
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "agua": "Retorno",
+        "gradiente": 0,
+        "resumo": "Seq D, Dosagem: 10 min, água Retorno",
+        "sequencia": "D",
+        "temperatura": 80,
+        "tempo": 10
+      },
+      "tipo": "Dosagem de Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 2.5,
+        "resumo": "Aquecer de 80→110°C, 2.5°C/min",
+        "temperatura": 110,
+        "tempo": 12
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "110°C por 30 min",
+        "temperatura": 110,
+        "tempo": 30
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Resfriar de 110→90°C, 0°C/min",
+        "temperatura": 90,
+        "tempo": 4
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "1:20, 14 min",
+        "temperatura": 0,
+        "tempo": 14
+      },
+      "tipo": "Transbordo"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Resfriar de 90→60°C, 0°C/min",
+        "temperatura": 60,
+        "tempo": 6
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "agua": "Retorno",
+        "gradiente": 0,
+        "resumo": "Seq E, água Retorno",
+        "sequencia": "E",
+        "temperatura": 0,
+        "tempo": 2
+      },
+      "tipo": "Injetar Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Aquecer de 60→70°C, 5°C/min",
+        "temperatura": 70,
+        "tempo": 2
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "70°C por 10 min",
+        "temperatura": 70,
+        "tempo": 10
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "1:15, 10 min",
+        "temperatura": 0,
+        "tempo": 10
+      },
+      "tipo": "Transbordo"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Soltar Banho",
+        "temperatura": 0,
+        "tempo": 3
+      },
+      "tipo": "Soltar Banho"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Água Fria, 1:5.5",
+        "temperatura": 25,
+        "tempo": 3
+      },
+      "tipo": "Encher Máquina"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "25°C por 3 min",
+        "temperatura": 25,
+        "tempo": 3
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Descarregar máquina",
+        "temperatura": 25,
+        "tempo": 5
+      },
+      "tipo": "Aviso"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Soltar Banho",
+        "temperatura": 25,
+        "tempo": 3
+      },
+      "tipo": "Soltar Banho"
+    }
+  ],
+  "receita": [
+    {
+      "produto": "TS 1079 LF CONC",
+      "sequencia": "A",
+      "preco": 0,
+      "quantidade": 1,
+      "percent": "g/L",
+      "rskg": 0
+    },
+    {
+      "produto": "TS 1038 DP",
+      "sequencia": "A",
+      "preco": 0,
+      "quantidade": 0.5,
+      "percent": "g/L",
+      "rskg": 0
+    },
+    {
+      "produto": "SAL",
+      "sequencia": "B",
+      "preco": 0,
+      "quantidade": 25,
+      "percent": "%",
+      "rskg": 0
+    },
+    {
+      "produto": "DP 5082 RE",
+      "sequencia": "C",
+      "preco": 0,
+      "quantidade": 8,
+      "percent": "%",
+      "rskg": 0
+    },
+    {
+      "produto": "SODA",
+      "sequencia": "C",
+      "preco": 0,
+      "quantidade": 10,
+      "percent": "%",
+      "rskg": 0
+    },
+    {
+      "produto": "CORANTE ENXOFRE HANIER",
+      "sequencia": "D",
+      "preco": 0,
+      "quantidade": 7,
+      "percent": "%",
+      "rskg": 0
+    },
+    {
+      "produto": "DP 5082 RE",
+      "sequencia": "D",
+      "preco": 0,
+      "quantidade": 2,
+      "percent": "%",
+      "rskg": 0
+    },
+    {
+      "produto": "SODA",
+      "sequencia": "D",
+      "preco": 0,
+      "quantidade": 2,
+      "percent": "%",
+      "rskg": 0
+    },
+    {
+      "produto": "OX 3055 CONC",
+      "sequencia": "E",
+      "preco": 0,
+      "quantidade": 0.5,
+      "percent": "%",
+      "rskg": 0
+    }
+  ],
+  "titulo": "Preto Enxofre - Novo Redutor"
+}

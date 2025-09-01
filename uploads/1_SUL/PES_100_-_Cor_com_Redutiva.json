@@ -1,0 +1,251 @@
+{
+  "etapas": [
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Água Quente, 1:7",
+        "temperatura": 40,
+        "tempo": 3
+      },
+      "tipo": "Encher Máquina"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Carregar máquina",
+        "temperatura": 40,
+        "tempo": 5
+      },
+      "tipo": "Aviso"
+    },
+    {
+      "dados": {
+        "agua": "Retorno",
+        "gradiente": 0,
+        "resumo": "Seq A, água Retorno",
+        "sequencia": "A",
+        "temperatura": 40,
+        "tempo": 2
+      },
+      "tipo": "Injetar Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Aquecer de 40→60°C, 0°C/min",
+        "temperatura": 60,
+        "tempo": 4
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "60°C por 3 min",
+        "temperatura": 60,
+        "tempo": 3
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Medir pH (pH 3 a 4,5)",
+        "temperatura": 60,
+        "tempo": 5
+      },
+      "tipo": "Aviso"
+    },
+    {
+      "dados": {
+        "agua": "Limpa",
+        "gradiente": 0,
+        "resumo": "Seq B, água Limpa",
+        "sequencia": "B",
+        "temperatura": 60,
+        "tempo": 2
+      },
+      "tipo": "Injetar Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Aquecer de 60→90°C, 0°C/min",
+        "temperatura": 90,
+        "tempo": 6
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 1,
+        "resumo": "Aquecer de 90→115°C, 1°C/min",
+        "temperatura": 115,
+        "tempo": 25
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "115°C por 10 min",
+        "temperatura": 115,
+        "tempo": 10
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "gradiente": 1.2,
+        "resumo": "Aquecer de 115→130°C, 1.2°C/min",
+        "temperatura": 130,
+        "tempo": 13
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "130°C por 30 min",
+        "temperatura": 130,
+        "tempo": 30
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "gradiente": 2,
+        "resumo": "Resfriar de 130→90°C, 2°C/min",
+        "temperatura": 90,
+        "tempo": 20
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "agua": "Retorno",
+        "gradiente": 0,
+        "resumo": "Seq C, água Retorno",
+        "sequencia": "C",
+        "temperatura": 25,
+        "tempo": 2
+      },
+      "tipo": "Injetar Produto"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "1:10, 5 min",
+        "temperatura": 0,
+        "tempo": 5
+      },
+      "tipo": "Transbordo"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "90°C por 10 min",
+        "temperatura": 90,
+        "tempo": 10
+      },
+      "tipo": "Patamar"
+    },
+    {
+      "dados": {
+        "gradiente": 5,
+        "resumo": "Resfriar de 90→80°C, 0°C/min",
+        "temperatura": 80,
+        "tempo": 2
+      },
+      "tipo": "Termoregulação"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "1:12, 5 min",
+        "temperatura": 0,
+        "tempo": 5
+      },
+      "tipo": "Transbordo"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Soltar Banho",
+        "temperatura": 0,
+        "tempo": 3
+      },
+      "tipo": "Soltar Banho"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Água Fria, 1:5",
+        "temperatura": 25,
+        "tempo": 3
+      },
+      "tipo": "Encher Máquina"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Descarregar máquina",
+        "temperatura": 25,
+        "tempo": 5
+      },
+      "tipo": "Aviso"
+    },
+    {
+      "dados": {
+        "gradiente": 0,
+        "resumo": "Soltar Banho",
+        "temperatura": 25,
+        "tempo": 3
+      },
+      "tipo": "Soltar Banho"
+    }
+  ],
+  "receita": [
+    {
+      "percent": "%",
+      "preco": 14.6,
+      "produto": "EM 8068 ESP",
+      "quantidade": 1.5,
+      "rskg": 0.21899999999999997,
+      "sequencia": "A"
+    },
+    {
+      "percent": "g/L",
+      "preco": 5.1,
+      "produto": "AQ 8045 E",
+      "quantidade": 1,
+      "rskg": 0.040799999999999996,
+      "sequencia": "A"
+    },
+    {
+      "percent": "g/L",
+      "preco": 7.6,
+      "produto": "AC 3026 EC",
+      "quantidade": 0.4,
+      "rskg": 0.02432,
+      "sequencia": "A"
+    },
+    {
+      "percent": "%",
+      "preco": 0,
+      "produto": "Corantes",
+      "quantidade": 0,
+      "rskg": 0,
+      "sequencia": "B"
+    },
+    {
+      "percent": "%",
+      "preco": 17.2,
+      "produto": "RED 2095 ESP",
+      "quantidade": 0.5,
+      "rskg": 0.086,
+      "sequencia": "C"
+    }
+  ],
+  "titulo": "PES 100% - Cores com redutiva"
+}
