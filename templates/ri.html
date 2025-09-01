@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Receita Inteligente</title>
+    <style>
+      body { font-family: Tahoma, sans-serif; padding: 1rem; }
+
+      .ri-header { position: relative; text-align: right; margin-bottom: 1.5rem; }
+      #btnCadastros {
+        background: #4783d7; color: #fff; border: none; border-radius: 4px;
+        padding: 8px 12px; cursor: pointer;
+      }
+      #btnCadastros:hover { background: #3568a3; }
+      #dropdown-cad {
+        position: absolute; top: 2.5rem; right: 0; background: #fff;
+        border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+        display: none; z-index: 10;
+      }
+      #dropdown-cad a { display: block; padding: .6rem 1rem; text-decoration: none; color: #333; }
+      #dropdown-cad a:hover { background: #f4f4f4; }
+
+      form { max-width: 600px; margin: auto; }
+      label { display: block; margin-bottom: 1rem; }
+      label > select { width: 100%; padding: .4rem; border: 1px solid #ccc; border-radius: 4px; }
+
+      .corante-row { display: flex; gap: .5rem; margin-bottom: .5rem; }
+      .corante-row select, .corante-row input {
+        flex: 1; padding: .4rem; border: 1px solid #ccc; border-radius: 4px;
+      }
+
+      #btnAddCorante {
+        background: #eee; border: 1px solid #999; padding: 6px 12px;
+        cursor: pointer; margin-bottom: 1rem;
+      }
+      #btnAddCorante:hover { background: #ddd; }
+
+      .total-box {
+        margin: .25rem 0 1rem 0; font-weight: bold;
+        display: flex; justify-content: flex-end;
+      }
+      .total-box .valor { min-width: 80px; text-align: right; }
+
+      .erro {
+        display: none;
+        color: #c0392b;
+        font-weight: 700;
+        margin: .25rem 0 .75rem 0;
+      }
+
+      button[type="submit"] {
+        background: #4783d7; color: #fff; border: none; border-radius: 4px;
+        padding: .6rem 1.2rem; cursor: pointer;
+      }
+      button[type="submit"]:hover { background: #3568a3; }
+    </style>
+  </head>
+
+  <body>
+    <div class="ri-header">
+      <button id="btnCadastros">Cadastros ▾</button>
+      <div id="dropdown-cad">
+        <a href="{{ url_for('cadastro_corante') }}">Cadastrar Corante</a>
+        <a href="{{ url_for('cadastro_fibra') }}">Cadastrar Fibra</a>
+        <a href="{{ url_for('cadastro_produto') }}">Cadastrar Produto Químico</a>
+        <a href="{{ url_for('cadastro_regra') }}">Cadastrar Regra</a>
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('receita_inteligente_view') }}">
+      <label>
+        Tipo de Fibra:
+        <select name="fibra_id" required>
+          <option value="">Selecione a fibra</option>
+          {% for f in fibras %}
+            <option value="{{ f.id }}">
+              {{ f.tipo }} – {{ f.nome }} – {{ f.perc_fibra }}% {{ f.tipo }}
+              {% if f.perc_elastano and f.perc_elastano|float > 0 %}
+                + {{ f.perc_elastano }}% PUE
+              {% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <h3>Corantes</h3>
+
+      <!-- mensagem de erro de duplicidade -->
+      <div id="erro-dup" class="erro">Corante duplicado</div>
+
+      <div id="corantes-container">
+        {% for _ in range(3) %}
+          <div class="corante-row">
+            <select name="corante_id[]" required>
+              <option value="">Selecione o corante</option>
+              {% for c in corantes %}
+                <option value="{{ c.id }}">
+                  {% if c.fornecedor %}{{ c.fornecedor }} / {% endif %}{{ c.nome }}
+                </option>
+              {% endfor %}
+            </select>
+            <input
+              type="number"
+              name="corante_perc[]"
+              placeholder="%"
+              step="0.001"
+              min="0"
+              value=""
+              required
+            />
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Total de corantes (%) -->
+      <div class="total-box">
+        Total: <span class="valor" id="total-corantes">0.000</span> %
+      </div>
+
+      <button type="button" id="btnAddCorante">+ Adicionar corante</button>
+      <button type="submit">Salvar Receita</button>
+    </form>
+
+    <script>
+      // Dropdown “Cadastros”
+      const btnCad = document.getElementById('btnCadastros');
+      const dd = document.getElementById('dropdown-cad');
+      btnCad.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+      });
+      document.addEventListener('click', () => { dd.style.display = 'none'; });
+
+      // Soma dos percentuais de corante
+      function atualizarTotal() {
+        let total = 0;
+        document.querySelectorAll('#corantes-container input[name="corante_perc[]"]').forEach(inp => {
+          const v = parseFloat(String(inp.value).replace(',', '.')) || 0;
+          total += v;
+        });
+        document.getElementById('total-corantes').textContent = total.toFixed(3);
+      }
+
+      // Ordenar opções por "Fornecedor / Corante", respeitando acentos
+      const coll = new Intl.Collator('pt-BR', { sensitivity: 'base' });
+      function ordenarOptionsPorTexto(selectEl) {
+        const ph = selectEl.options[0];
+        const opts = Array.from(selectEl.options).slice(1);
+        opts.sort((a, b) => coll.compare(a.text, b.text));
+        selectEl.innerHTML = '';
+        selectEl.appendChild(ph);
+        opts.forEach(o => selectEl.appendChild(o));
+      }
+      function ordenarTodosOsSelectsCorantes() {
+        document.querySelectorAll('select[name="corante_id[]"]').forEach(ordenarOptionsPorTexto);
+      }
+
+      // ======= PREVENÇÃO DE DUPLICADOS =======
+      function valoresSelecionados() {
+        const vals = [];
+        document.querySelectorAll('select[name="corante_id[]"]').forEach(sel => {
+          if (sel.value) vals.push(sel.value);
+        });
+        return vals;
+      }
+
+      function mostrarErroDup(mostrar) {
+        const box = document.getElementById('erro-dup');
+        box.style.display = mostrar ? 'block' : 'none';
+      }
+
+      // Desabilita em cada select as opções já escolhidas nos outros
+      function refrescarOpcoesDesabilitadas() {
+        const usados = new Set(valoresSelecionados());
+        document.querySelectorAll('select[name="corante_id[]"]').forEach(sel => {
+          const meuValor = sel.value;
+          Array.from(sel.options).forEach((opt, idx) => {
+            if (idx === 0) { opt.disabled = false; return; } // placeholder
+            // pode manter habilitado se for o que já está escolhido neste select
+            opt.disabled = usados.has(opt.value) && opt.value !== meuValor;
+          });
+        });
+      }
+
+      // Valida ao trocar um corante; se duplicado, volta para vazio e alerta
+      function aoMudarCorante(e) {
+        if (e.target.name !== 'corante_id[]') return;
+        const sel = e.target;
+        const vals = valoresSelecionados();
+        const valor = sel.value;
+        const qtdOcorrencias = vals.filter(v => v === valor).length;
+
+        if (valor && qtdOcorrencias > 1) {
+          // duplicado
+          sel.value = '';
+          mostrarErroDup(true);
+        } else {
+          mostrarErroDup(false);
+        }
+        refrescarOpcoesDesabilitadas();
+      }
+      // ======= FIM PREVENÇÃO DE DUPLICADOS =======
+
+      // Adicionar nova linha
+      document.getElementById('btnAddCorante').addEventListener('click', () => {
+        const container = document.getElementById('corantes-container');
+        const prototype = container.querySelector('.corante-row');
+        const clone = prototype.cloneNode(true);
+        clone.querySelector('select').value = '';
+        clone.querySelector('input[name="corante_perc[]"]').value = '';
+        container.appendChild(clone);
+        ordenarOptionsPorTexto(clone.querySelector('select'));
+        refrescarOpcoesDesabilitadas();
+        atualizarTotal();
+      });
+
+      // Delegação de eventos
+      const container = document.getElementById('corantes-container');
+      container.addEventListener('input', (e) => {
+        if (e.target && e.target.name === 'corante_perc[]') atualizarTotal();
+      });
+      container.addEventListener('change', aoMudarCorante);
+
+      // Inicialização
+      ordenarTodosOsSelectsCorantes();
+      refrescarOpcoesDesabilitadas();
+      atualizarTotal();
+    </script>
+  </body>
+</html>

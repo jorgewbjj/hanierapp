@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Menu Principal</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      body {
+        /* fundo com capa.jpg via caminho absoluto */
+        background: url('/static/capa.jpg') no-repeat center top fixed;
+        background-size: contain;
+        position: relative;
+        font-family: Tahoma, sans-serif;
+      }
+
+      /* Ajustes mobile: largura total, altura proporcional para enxergar o logo inteiro */
+      @media (max-width: 767px) {
+        body {
+          background-size: 100% auto;
+          background-position: top center;
+          min-height: 100vh;
+        }
+        .overlay {
+          top: 60%;
+        }
+      }
+
+      /* comportamento padrão (mobile e desktop) */
+      .overlay {
+        position: absolute;
+        top: 65%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.85);
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        max-width: 320px;
+        width: 90%;
+      }
+
+      @media (min-width: 768px) {
+        .overlay {
+          top: 85%;
+        }
+      }
+
+      h1 {
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        color: #222;
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        text-decoration: none;
+        background: #4783d7;
+        color: white;
+        border-radius: 6px;
+        font-size: 1rem;
+      }
+      .btn:hover {
+        background: #3568a3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay">
+      <h1>Escolha uma opção</h1>
+      <a href="{{ url_for('custo_view') }}" class="btn">Custo</a>
+      <a href="{{ url_for('processo_view') }}" class="btn">Processo</a>
+      <a href="{{ url_for('receita_inteligente_view') }}" class="btn">
+        Receita Inteligente
+      </a>
+      <!-- Novo botão -->
+      <a href="{{ url_for('arquivos') }}" class="btn">Database – Gráficos</a>
+    </div>
+  </body>
+</html>

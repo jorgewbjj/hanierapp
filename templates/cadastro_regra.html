@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>Cadastrar Regra – Receita Inteligente</title>
+    <style>
+      :root {
+        --brand: #4783d7;
+        --brand-2: #3568a3;
+        --line: #cfd6e4;
+        --muted: #6b7280;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        font-family: Tahoma, sans-serif;
+        padding: 1rem;
+        margin: 0;
+      }
+
+      h2 { margin: 0 0 1rem 0; }
+
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .back-link {
+        text-decoration: none;
+        font-size: 1.2rem;
+        color: var(--brand);
+        line-height: 1;
+      }
+
+      .flash {
+        margin: .5rem 0;
+        padding: .6rem .8rem;
+        border-radius: 8px;
+        background: #eef5ff;
+        color: #1b3f7d;
+      }
+
+      /* Linha única com 8 colunas em telas largas */
+      .form-row {
+        display: grid;
+        grid-template-columns:
+          180px   /* Função */
+          180px   /* Produto */
+          180px   /* Fibra */
+          140px   /* % Inicial */
+          140px   /* % Final */
+          160px   /* Quantidade */
+          200px   /* Gráfico */
+          240px;  /* Regra especial */
+        gap: 12px;
+        align-items: end; /* alinha todos os controles pela base */
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 14px;
+        font-weight: 600;
+        gap: 6px;
+      }
+
+      input, select {
+        padding: .45rem;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .btn {
+        background: var(--brand);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: .6rem .9rem;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .btn:hover { background: var(--brand-2); }
+
+      .btn-secondary {
+        background: #6b7a90;
+        color: #fff;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: .6rem .9rem;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+
+      .placeholder-grafico {
+        height: 80px;
+        border: 2px dashed var(--line);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .regra-especial-box { display: flex; flex-direction: column; gap: 6px; }
+      .regra-extra { display: none; margin-top: 6px; }
+
+      /* Ajuste do campo Quantidade (caber na coluna) */
+      .quantidade-box { display: flex; gap: 6px; align-items: center; }
+      .quantidade-box input { width: 96px; min-width: 0; }
+      .quantidade-box select { width: 60px; min-width: 60px; }
+
+      /* Responsividade */
+      @media (max-width: 1400px) {
+        .form-row {
+          grid-template-columns: repeat(4, minmax(180px, 1fr));
+          align-items: start;
+        }
+      }
+      @media (max-width: 900px) {
+        .form-row {
+          grid-template-columns: repeat(2, minmax(160px, 1fr));
+        }
+      }
+      @media (max-width: 520px) {
+        .form-row { grid-template-columns: 1fr; }
+        .placeholder-grafico { height: 70px; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <a href="{{ url_for('receita_inteligente_view') }}" class="back-link" aria-label="Voltar">←</a>
+      <h2 id="page-title">Cadastrar Regra</h2>
+    </div>
+
+    {% with msgs = get_flashed_messages(category_filter=['success','error']) %}
+      {% for m in msgs %}
+        <div class="flash" role="status" aria-live="polite">{{ m }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form id="form-regra" method="post" novalidate>
+      <!-- hidden: usado para edição de regras -->
+      <input type="hidden" name="regra_id" id="regra-id" value="{{ regra.id if regra else '' }}"/>
+
+      <div class="form-row">
+        <!-- Função -->
+        <label for="sel-funcao">
+          Função Produto
+          <select id="sel-funcao" name="funcao" required>
+            <option value="">Selecione para filtrar os produtos</option>
+          </select>
+        </label>
+
+        <!-- Produto -->
+        <label for="sel-produto">
+          Produto
+          <select name="produto_id" id="sel-produto" required>
+            <option value="">Selecione a função…</option>
+          </select>
+        </label>
+
+        <!-- Fibra -->
+        <label for="sel-fibra">
+          Fibra
+          <select name="fibra_id" id="sel-fibra" required></select>
+        </label>
+
+        <!-- % Corante Inicial -->
+        <label for="pct-corante-inicial">
+          % Corante Inicial
+          <input
+            id="pct-corante-inicial"
+            type="number"
+            step="0.001"
+            min="0"
+            name="pct_corante_inicial"
+            inputmode="decimal"
+            required
+            placeholder="ex.: 0,50"
+          />
+        </label>
+
+        <!-- % Corante Final -->
+        <label for="pct-corante-final">
+          % Corante Final
+          <input
+            id="pct-corante-final"
+            type="number"
+            step="0.001"
+            min="0"
+            name="pct_corante_final"
+            inputmode="decimal"
+            required
+            placeholder="ex.: 2,00"
+          />
+        </label>
+
+        <!-- Quantidade -->
+        <label for="quantidade-produto">
+          Quantidade
+          <div class="quantidade-box">
+            <input
+              id="quantidade-produto"
+              type="number"
+              step="0.001"
+              min="0"
+              name="quantidade_produto"
+              inputmode="decimal"
+              required
+              placeholder="ex.: 10,000"
+            />
+            <select name="unidade" aria-label="Unidade" required>
+              <option value="%">%</option>
+              <option value="g/L">g/L</option>
+            </select>
+          </div>
+        </label>
+
+        <!-- Gráfico (placeholder) -->
+        <div class="placeholder-grafico" aria-hidden="true">[ Gráfico ]</div>
+
+        <!-- Regra especial -->
+        <div class="regra-especial-box">
+          <label style="flex-direction: row; align-items: center; gap: .5rem;">
+            <input type="checkbox" id="chk-especial" name="regra_especial_corante" />
+            Regra especial corante
+          </label>
+
+          <div id="box-especial" class="regra-extra">
+            <label for="sel-corante">
+              Corante
+              <select id="sel-corante" name="corante_id"></select>
+            </label>
+
+            <label for="resultado-novo">
+              Resultado novo
+              <input
+                id="resultado-novo"
+                type="number"
+                step="0.001"
+                name="resultado_novo"
+                inputmode="decimal"
+                placeholder="ex.: 1,50"
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn" type="submit">Salvar Regra</button>
+        <a href="{{ url_for('regras_list') }}" class="btn-secondary" role="button">Ver Regras Salvas</a>
+      </div>
+    </form>
+
+    <script>
+      const $ = (s) => document.querySelector(s);
+
+      async function fetchJSON(url) {
+        const r = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!r.ok) throw new Error('Erro ao buscar ' + url + ' (HTTP ' + r.status + ')');
+        return r.json();
+      }
+
+      // Funções -> #sel-funcao
+      async function carregarFuncoes() {
+        try {
+          const data = await fetchJSON('/api/funcoes');
+          const sel = $('#sel-funcao');
+          for (const f of data) sel.add(new Option(f.nome, f.nome)); // Produto.funcao é string
+        } catch (e) {
+          console.error('Erro ao carregar funções:', e);
+          $('#sel-funcao').innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+      }
+
+      // Produtos por função -> #sel-produto
+      async function carregarProdutos(funcao) {
+        const sel = $('#sel-produto');
+        sel.innerHTML = '<option>Carregando…</option>';
+        try {
+          const data = await fetchJSON('/api/produtos?funcao=' + encodeURIComponent(funcao || ''));
+          sel.innerHTML = data.length ? '' : '<option value="">Nenhum produto</option>';
+          for (const p of data) sel.add(new Option(p.nome, p.id));
+        } catch (e) {
+          console.error('Erro ao carregar produtos:', e);
+          sel.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+      }
+
+      // Fibras -> #sel-fibra
+      async function carregarFibras() {
+        const sel = $('#sel-fibra');
+        sel.innerHTML = '<option value="">Carregando…</option>';
+        try {
+          const data = await fetchJSON('/api/fibras');
+          if (!Array.isArray(data) || data.length === 0) {
+            sel.innerHTML = '<option value="">Nenhuma fibra cadastrada</option>';
+            return;
+          }
+          sel.innerHTML = '';
+          for (const f of data) sel.add(new Option(f.nome, f.id));
+        } catch (e) {
+          console.error('Erro ao carregar fibras:', e);
+          sel.innerHTML = '<option value="">Erro ao carregar fibras</option>';
+        }
+      }
+
+      // Corantes -> #sel-corante (só quando marcar a regra)
+      async function carregarCorantes() {
+        const sel = $('#sel-corante');
+        sel.innerHTML = '<option>Carregando…</option>';
+        try {
+          const data = await fetchJSON('/api/corantes');
+          sel.innerHTML = data.length ? '' : '<option value="">Nenhum corante</option>';
+          for (const c of data) {
+            const label = c.fornecedor ? `${c.fornecedor} / ${c.nome}` : c.nome;
+            sel.add(new Option(label, c.id));
+          }
+        } catch (e) {
+          console.error('Erro ao carregar corantes:', e);
+          sel.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+      }
+
+      // Alterna UI/required dos campos da regra especial
+      async function toggleEspecialUI(ativo) {
+        const box = $('#box-especial');
+        const selCorante = $('#sel-corante');
+        const inResultado = $('#resultado-novo');
+        box.style.display = ativo ? 'block' : 'none';
+        selCorante.required = ativo;
+        inResultado.required = ativo;
+        if (ativo) await carregarCorantes();
+      }
+
+      // Normaliza pt-BR (vírgula) para ponto antes de enviar
+      function normalizarNumerosDoFormulario(form) {
+        const campos = form.querySelectorAll('input[type="number"][inputmode="decimal"]');
+        for (const el of campos) {
+          if (el.value && el.value.includes(',')) {
+            el.value = el.value.replace(/\./g, '').replace(',', '.');
+          }
+        }
+      }
+
+      // Inicialização da página + eventos
+      document.addEventListener('DOMContentLoaded', async () => {
+        await carregarFuncoes();
+        await carregarFibras();
+
+        $('#sel-funcao').addEventListener('change', (e) => {
+          const v = e.target.value;
+          if (v) carregarProdutos(v);
+          else $('#sel-produto').innerHTML = '<option value="">Selecione a função…</option>';
+        });
+
+        $('#chk-especial').addEventListener('change', async (e) => {
+          await toggleEspecialUI(e.target.checked);
+        });
+
+        // Normalização numérica no submit
+        document.querySelector('#form-regra').addEventListener('submit', (ev) => {
+          normalizarNumerosDoFormulario(ev.target);
+        });
+
+        // --- Pré-preenchimento quando estiver editando uma regra ---
+        {% if regra %}
+        try {
+          const funcaoSel = {{ regra.funcao|tojson }};
+          const selFunc = document.querySelector('#sel-funcao');
+          selFunc.value = funcaoSel;
+
+          await carregarProdutos(funcaoSel);
+          document.querySelector('#sel-produto').value = {{ regra.produto_id }};
+
+          document.querySelector('#sel-fibra').value = {{ regra.fibra_id }};
+
+          document.querySelector('input[name="pct_corante_inicial"]').value = {{ '%.3f'|format(regra.pct_corante_ini) }};
+          document.querySelector('input[name="pct_corante_final"]').value   = {{ '%.3f'|format(regra.pct_corante_fim) }};
+          document.querySelector('input[name="quantidade_produto"]').value  = {{ '%.3f'|format(regra.qtde_produto) }};
+
+          const selUn = document.querySelector('select[name="unidade"]');
+          if (selUn) selUn.value = {{ (regra.unidade or '%')|tojson }};
+
+          const isEsp = {{ 'true' if regra.regra_especial_corante else 'false' }};
+          const chk = document.querySelector('#chk-especial');
+          chk.checked = (isEsp === true || isEsp === 'true');
+          await toggleEspecialUI(chk.checked);
+
+          if (chk.checked) {
+            {% if regra.corante_id %}
+            document.querySelector('#sel-corante').value = {{ regra.corante_id }};
+            {% endif %}
+            {% if regra.resultado_novo is not none %}
+            document.querySelector('#resultado-novo').value = {{ '%.3f'|format(regra.resultado_novo) }};
+            {% endif %}
+          }
+
+          const h2 = document.querySelector('h2');
+          if (h2) h2.textContent = 'Editar Regra';
+        } catch (e) {
+          console.error('Falha ao pré-preencher a regra:', e);
+        }
+        {% endif %}
+      });
+    </script>
+  </body>
+</html>

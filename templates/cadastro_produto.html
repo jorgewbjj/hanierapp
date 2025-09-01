@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cadastro de Produto Químico</title>
+    <style>
+      body { font-family: Tahoma, sans-serif; padding: 1rem; }
+      h2 { margin-top: 0; }
+
+      /* Formulário */
+      form {
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+        margin-bottom: 1.5rem;
+      }
+      label { margin-bottom: .5rem; }
+      input, select {
+        padding: .4rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .row { display: flex; align-items: center; gap: .5rem; }
+      .row label { margin: 0; }
+      button[type="submit"] {
+        padding: .6rem;
+        background: #4783d7;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button[type="submit"]:hover { background: #3568a3; }
+      .flash { color: green; margin-bottom: 1rem; }
+
+      /* Tabela */
+      .card { background:#fff; border-radius:8px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: 10px; border-bottom: 1px solid #e6ebf2; text-align: left; vertical-align: middle; }
+      thead th { background: #f6f8fb; }
+      tbody tr:hover { background: #fafbff; }
+
+      /* Ações */
+      .actions { display: inline-flex; gap: .4rem; align-items: center; }
+      .btn { background: #fff; border: 1px solid #d0d7e1; border-radius: 6px; padding: .35rem .7rem; cursor: pointer; font-size: 0.9rem; }
+      .btn:hover { background:#f1f3f5; }
+      .btn-danger { background:#e74c3c; color:#fff; border:none; }
+      .btn-danger:hover { background:#c0392b; }
+
+      /* Cabeçalho com seta de volta + ação à direita */
+      .header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+      .header-left { display:flex; align-items:center; gap:1rem; }
+      .back-link { text-decoration: none; font-size: 1.2rem; color: #4783d7; }
+      .back-link:hover { opacity: 0.8; }
+
+      /* Modal genérico */
+      .modal-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,.45);
+        display: none; align-items: center; justify-content: center;
+      }
+      .modal {
+        background: #fff; width: min(640px, 96vw); border-radius: 10px;
+        padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+      }
+      .hidden { display: none !important; }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <div class="header-left">
+        <a href="{{ url_for('receita_inteligente_view') }}" class="back-link" title="Voltar">←</a>
+        <h2 id="form-title" style="margin:0;">Adicionar Novo Produto Químico</h2>
+      </div>
+      <button id="btn-cad-funcao" class="btn">+ Cadastrar Função…</button>
+    </div>
+
+    {% with msgs = get_flashed_messages(category_filter=['success','error']) %}
+      {% for m in msgs %}
+        <div class="flash">{{ m }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="post" id="produto-form">
+      <input type="hidden" name="id" id="produto-id" />
+
+      <label>
+        Nome do Produto:<br />
+        <input type="text" name="nome" id="produto-nome" required />
+      </label>
+
+      <label>
+        Função:<br />
+        <select name="funcao" id="produto-funcao" required>
+          <!-- opções carregadas via JS -->
+        </select>
+      </label>
+
+      <div class="row" style="margin-bottom: 1rem;">
+        <label>
+          <input type="checkbox" name="ativo" id="produto-ativo" checked />
+          Ativo
+        </label>
+      </div>
+
+      <button type="submit">Salvar Produto</button>
+    </form>
+
+    <h2>Produtos Cadastrados</h2>
+
+    <div class="card">
+      {% if produtos %}
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Função</th>
+              <th>Contratipo</th>
+              <th>Força (%)</th>
+              <th style="width: 320px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in produtos %}
+              {% if p.contratipos %}
+                {% for c in p.contratipos %}
+                  <tr data-id="{{ p.id }}">
+                    <td><strong>{{ p.nome }}</strong> <em>({{ 'Ativo' if p.ativo else 'Inativo' }})</em></td>
+                    <td>{{ p.funcao }}</td>
+                    <td>{{ c.nome }}</td>
+                    <td>{{ '%.2f'|format(c.forca_pct) }}</td>
+                    <td>
+                      <div class="actions">
+                        <button type="button" class="btn btn-contratipos" data-id="{{ p.id }}" data-nome="{{ p.nome }}">🧪 Contratipos</button>
+                        <button type="button" class="btn btn-edit">✏️ Editar</button>
+                        <button type="button" class="btn btn-danger"
+                          onclick="if(confirm('Tem certeza que deseja excluir este produto?')) { document.getElementById('form-del-{{ p.id }}').submit(); }">
+                          ✖️ Excluir
+                        </button>
+                        <form id="form-del-{{ p.id }}" method="post" action="{{ url_for('excluir_produto', pid=p.id) }}" style="display:none;"></form>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr data-id="{{ p.id }}">
+                  <td><strong>{{ p.nome }}</strong> <em>({{ 'Ativo' if p.ativo else 'Inativo' }})</em></td>
+                  <td>{{ p.funcao }}</td>
+                  <td>–</td>
+                  <td>–</td>
+                  <td>
+                    <div class="actions">
+                      <button type="button" class="btn btn-contratipos" data-id="{{ p.id }}" data-nome="{{ p.nome }}">🧪 Contratipos</button>
+                      <button type="button" class="btn btn-edit">✏️ Editar</button>
+                      <button type="button" class="btn btn-danger"
+                        onclick="if(confirm('Tem certeza que deseja excluir este produto?')) { document.getElementById('form-del-{{ p.id }}').submit(); }">
+                        ✖️ Excluir
+                      </button>
+                      <form id="form-del-{{ p.id }}" method="post" action="{{ url_for('excluir_produto', pid=p.id) }}" style="display:none;"></form>
+                    </div>
+                  </td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>(Nenhum produto cadastrado.)</p>
+      {% endif %}
+    </div>
+
+    <p><a href="{{ url_for('receita_inteligente_view') }}">← Voltar para Receita Inteligente</a></p>
+
+    <!-- Modal Contratipos -->
+    <div id="modal-contratipos" class="modal-backdrop hidden">
+      <div class="modal">
+        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <strong id="mc-titulo">Contratipos</strong>
+          <button type="button" id="mc-fechar" style="border:none; background:none; font-size:18px; cursor:pointer;">✖️</button>
+        </header>
+
+        <div class="row" style="gap:8px; margin-bottom:8px;">
+          <input id="mc-nome" placeholder="Nome do contratipo"
+                 style="flex:2; padding:10px; border:1px solid #d0d7e1; border-radius:8px;" />
+          <input id="mc-forca" type="number" step="0.01" min="0" max="100" placeholder="Força (%)"
+                 style="width:140px; padding:10px; border:1px solid #d0d7e1; border-radius:8px;" />
+          <button id="mc-salvar"
+                  style="padding:10px 14px; border:none; border-radius:8px; background:#4783d7; color:#fff; cursor:pointer;">
+            Adicionar
+          </button>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th style="width:140px;">Força (%)</th>
+              <th style="width:90px;">Status</th>
+              <th style="width:170px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="mc-tbody"><!-- preenchido via JS --></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal Cadastrar Função -->
+    <div id="modal-funcao" class="modal-backdrop hidden" style="display:none;">
+      <div class="modal">
+        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <strong>Cadastrar Função</strong>
+          <button type="button" id="mf-fechar" style="border:none; background:none; font-size:18px; cursor:pointer;">✖️</button>
+        </header>
+        <div class="row" style="gap:8px; margin-bottom:8px;">
+          <input id="mf-nome" placeholder="Nome da função (ex.: Detergente)"
+                 style="flex:1; padding:10px; border:1px solid #d0d7e1; border-radius:8px;" />
+          <button id="mf-salvar" class="btn" style="padding:10px 14px;">Salvar</button>
+        </div>
+        <p style="margin:0; font-size:12px; color:#6b7280;">
+          Dica: já deixamos pré-cadastrados Detergente, Emulgador, Igualizante, Dispersante, Sequestrante, Ácido, Álcali, Redutor e Oxidante.
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Utilitários
+      const $ = (sel) => document.querySelector(sel);
+      function esc(s) {
+        return (s ?? "")
+          .toString()
+          .replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+      }
+
+      // =========================
+      // Edição inline de Produto
+      // =========================
+      document.addEventListener("click", (e) => {
+        const btnEdit = e.target.closest(".btn-edit");
+        if (btnEdit) {
+          const tr = btnEdit.closest("tr[data-id]");
+          const id = tr.dataset.id;
+          const nome = tr.querySelector("td:nth-child(1) strong").textContent.trim();
+          const funcao = tr.querySelector("td:nth-child(2)").textContent.trim();
+          const status = tr.querySelector("td:nth-child(1) em").textContent.includes("Ativo");
+
+          $("#form-title").textContent = "Editar Produto Químico";
+          $("#produto-id").value = id;
+          $("#produto-nome").value = nome;
+
+          // garante que a função do produto esteja no select (se não estiver, adiciona)
+          const sel = $("#produto-funcao");
+          let option = Array.from(sel.options).find(o => o.value === funcao);
+          if (!option) {
+            option = new Option(funcao, funcao);
+            sel.add(option);
+          }
+          sel.value = funcao;
+
+          $("#produto-ativo").checked = status;
+          $("#produto-form").scrollIntoView({ behavior: "smooth" });
+        }
+      });
+
+      // Ajusta título se já estiver em modo edição
+      window.addEventListener("DOMContentLoaded", async () => {
+        await carregarFuncoes(); // carrega opções de função no select
+        if ($("#produto-id").value) $("#form-title").textContent = "Editar Produto Químico";
+      });
+
+      // =========================
+      // CRUD de Contratipos (Modal)
+      // =========================
+      let MC_PRODUTO_ID = null;
+
+      async function mc_carregar() {
+        if (!MC_PRODUTO_ID) return;
+        const res = await fetch(`/api/produtos/${MC_PRODUTO_ID}/contratipos`);
+        const lista = await res.json();
+        const tbody = $("#mc-tbody");
+        tbody.innerHTML = "";
+
+        for (const c of lista) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${esc(c.nome)}</td>
+            <td>${(c.forca_pct ?? 0).toFixed(2)}</td>
+            <td>${c.ativo ? "Ativo" : "Inativo"}</td>
+            <td>
+              <button onclick="mc_editar(${c.id}, '${esc(c.nome)}', ${(c.forca_pct ?? 0).toFixed(2)}, ${c.ativo})">Editar</button>
+              <button onclick="mc_toggle(${c.id}, ${!c.ativo})">${c.ativo ? "Desativar" : "Ativar"}</button>
+              <button onclick="mc_excluir(${c.id})">Excluir</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      function mc_abrir(produtoId, produtoNome) {
+        MC_PRODUTO_ID = produtoId;
+        $("#mc-titulo").textContent = `Contratipos – ${produtoNome}`;
+        $("#mc-nome").value = "";
+        $("#mc-forca").value = "";
+        $("#mc-salvar").textContent = "Adicionar";
+        $("#mc-salvar").dataset.editId = "";
+        $("#modal-contratipos").classList.remove("hidden");
+        $("#modal-contratipos").style.display = "flex";
+        mc_carregar();
+      }
+
+      function mc_fechar() {
+        $("#modal-contratipos").classList.add("hidden");
+        $("#modal-contratipos").style.display = "none";
+        MC_PRODUTO_ID = null;
+      }
+
+      async function mc_salvar() {
+        if (!MC_PRODUTO_ID) return;
+
+        const nome = $("#mc-nome").value.trim();
+        const forca = $("#mc-forca").value.trim();
+
+        if (!nome) { alert("Informe o nome do contratipo."); return; }
+        if (!forca) { alert("Informe a força (%)."); return; }
+
+        const editId = $("#mc-salvar").dataset.editId;
+        let res;
+
+        if (editId) {
+          res = await fetch(`/api/contratipos/${editId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome, forca_pct: forca })
+          });
+        } else {
+          res = await fetch(`/api/produtos/${MC_PRODUTO_ID}/contratipos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome, forca_pct: forca })
+          });
+        }
+
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({ erro: "Erro ao salvar" }));
+          alert(e.erro || "Erro ao salvar");
+          return;
+        }
+
+        $("#mc-nome").value = "";
+        $("#mc-forca").value = "";
+        $("#mc-salvar").textContent = "Adicionar";
+        $("#mc-salvar").dataset.editId = "";
+        await mc_carregar();
+      }
+
+      function mc_editar(id, nome, forca, ativo) {
+        $("#mc-nome").value = nome;
+        $("#mc-forca").value = Number(forca).toFixed(2);
+        $("#mc-salvar").textContent = "Salvar";
+        $("#mc-salvar").dataset.editId = id;
+      }
+
+      async function mc_toggle(id, novoStatus) {
+        const res = await fetch(`/api/contratipos/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ativo: !!novoStatus })
+        });
+        if (!res.ok) { alert("Erro ao alterar status."); return; }
+        await mc_carregar();
+      }
+
+      async function mc_excluir(id) {
+        if (!confirm("Excluir este contratipo?")) return;
+        const res = await fetch(`/api/contratipos/${id}`, { method: "DELETE" });
+        if (!res.ok) { alert("Erro ao excluir."); return; }
+        await mc_carregar();
+      }
+
+      document.addEventListener("click", (e) => {
+        const btnContr = e.target.closest(".btn-contratipos");
+        if (btnContr) {
+          const tr = btnContr.closest("tr[data-id]");
+          const id = Number(tr.dataset.id);
+          const nome = btnContr.dataset.nome || tr.querySelector("td:first-child strong")?.textContent || "";
+          mc_abrir(id, nome);
+        }
+      });
+      $("#mc-fechar").addEventListener("click", mc_fechar);
+      $("#mc-salvar").addEventListener("click", mc_salvar);
+
+      // =========================
+      // Funções (select + modal)
+      // =========================
+      async function carregarFuncoes(selectId = 'produto-funcao', manterSelecionado = true) {
+        const sel = document.getElementById(selectId);
+        const selecionado = manterSelecionado ? sel?.value : null;
+
+        const res = await fetch('/api/funcoes');
+        const lista = await res.json();
+
+        if (sel) {
+          sel.innerHTML = '';
+          for (const f of lista) {
+            const opt = document.createElement('option');
+            opt.value = f.nome;       // Produto.funcao é string
+            opt.textContent = f.nome; // label
+            sel.appendChild(opt);
+          }
+          if (selecionado) {
+            const existe = Array.from(sel.options).some(o => o.value === selecionado);
+            if (existe) sel.value = selecionado;
+          }
+        }
+      }
+
+      function abrirModalFuncao() {
+        const m = document.getElementById('modal-funcao');
+        m.classList.remove('hidden');
+        m.style.display = 'flex';
+        document.getElementById('mf-nome').value = '';
+        document.getElementById('mf-nome').focus();
+      }
+
+      function fecharModalFuncao() {
+        const m = document.getElementById('modal-funcao');
+        m.classList.add('hidden');
+        m.style.display = 'none';
+      }
+
+      async function salvarFuncao() {
+        const nome = (document.getElementById('mf-nome').value || '').trim();
+        if (!nome) { alert('Informe o nome da função.'); return; }
+
+        const res = await fetch('/api/funcoes', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({ nome })
+        });
+
+        if (!res.ok) {
+          const e = await res.json().catch(()=>({erro:'Erro ao salvar função'}));
+          alert(e.erro || 'Erro ao salvar função');
+          return;
+        }
+
+        // atualiza select e seleciona a função criada
+        await carregarFuncoes('produto-funcao', false);
+        const sel = document.getElementById('produto-funcao');
+        sel.value = nome;
+        fecharModalFuncao();
+      }
+
+      document.getElementById('btn-cad-funcao').addEventListener('click', abrirModalFuncao);
+      document.getElementById('mf-fechar').addEventListener('click', fecharModalFuncao);
+      document.getElementById('mf-salvar').addEventListener('click', salvarFuncao);
+    </script>
+  </body>
+</html>

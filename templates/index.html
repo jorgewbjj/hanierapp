@@ -1,0 +1,2108 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<link rel="manifest" href="/static/manifest.json">
+
+<!-- PWA para iOS (importante para iPhone) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tingimento">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/static/pwa-icon-192.png">
+<meta name="theme-color" content="#4783d7">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>{{ titulo }}</title>
+<style>
+  body {
+    font-family: Tahoma, sans-serif;
+    background-color: #e8ecf0;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .container {
+    background-color: #f4f4f4;
+    padding: 15px 25px;
+    border-radius: 5px;
+    max-width: 1000px;
+    margin: auto;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  }
+
+  h2 { font-size: 20px; margin-bottom: 10px; }
+
+  button {
+    background-color: #ececec;
+    border: 1px solid #999;
+    padding: 6px 12px;
+    font-size: 13px;
+    margin: 3px 2px;
+    cursor: pointer;
+  }
+  button:hover { background-color: #ddd; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #aaa;
+    padding: 6px;
+    text-align: center;
+  }
+  th { background-color: #dce6f2; font-weight: bold; }
+  p  { margin-top: 20px; font-weight: bold; text-align: center; }
+  tr.selected { background-color: #fff2a8; }
+.side-fab {
+  position: fixed;
+  top: 90px;   /* no topo, pode ajustar para baixo se quiser */
+  left: 8px;   /* gruda na esquerda */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 2000;
+  background: none;
+  pointer-events: none; /* só ativa eventos nos botões */
+}
+.side-fab button {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 12px #0002;
+  border: 1px solid #b8b8b8;
+  font-size: 22px;
+  color: #272e35;
+  cursor: pointer;
+  pointer-events: auto; /* ativa click nos botões */
+  transition: background .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.side-fab button:active { background: #e4e7ed; }
+
+.side-fab button:first-child { color: #d11a1a; } /* O 'X' em vermelho */
+
+@media (max-width:600px) {
+  .side-fab {
+    top: auto;
+    bottom: 80px;
+    left: 8px;
+    right: auto;
+    gap: 10px;
+  }
+}
+
+  /* Modal, container, botões laterais etc. */
+  #modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.42);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+  }
+  #modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px #0002, 0 2px 6px #0001;
+    padding: 32px 40px 28px 40px;
+    width: 100%;
+    max-width: 440px;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    font-family: Tahoma, sans-serif;
+    font-size: 17px;
+  }
+  #modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 14px;
+    font-size: 23px;
+    font-weight: bold;
+    color: #262a33;
+    letter-spacing: 0.5px;
+  }
+  #modal-content label {
+    font-size: 16px;
+    margin-bottom: 3px;
+    font-weight: 500;
+  }
+  #modal-content select,
+  #modal-content input[type="text"],
+  #modal-content input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 15px;
+    border: 1px solid #b7bec6;
+    border-radius: 6px;
+    background: #fafbfc;
+    margin-bottom: 10px;
+    outline: none;
+    transition: border 0.15s;
+  }
+  #modal-content select:focus,
+  #modal-content input:focus {
+    border-color: #4783d7;
+    background: #f4f9ff;
+  }
+  #modal-content button {
+    background: #e9eaea;
+    border: 1px solid #b7bec6;
+    color: #262a33;
+    padding: 8px 0;
+    font-size: 16px;
+    border-radius: 6px;
+    margin-top: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background .13s;
+  }
+  #modal-content button:hover {
+    background: #dbe9fa;
+  }
+
+  /* Logo Hanier */
+  #logoHanier {
+    background-image: url("{{ url_for('static', filename='logo_hanier.svg') }}");
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 160px;
+    height: 40px;
+    display: block;
+    margin-right: 10px;
+  }
+
+  /* Ícones em linha (desktop e mobile) */
+  .icon-row {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .icon-row .icon-btn {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    width: 80px;
+    height: 80px;
+    min-width: 44px;
+    min-height: 44px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-row .icon-btn img,
+  .icon-row .icon-btn svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* +++ NOVO: LAYOUT FLEX PARA TABELA E BOTÕES LATERAIS +++ */
+  .table-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 12px;
+  }
+  .side-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-right: 7px;
+    margin-top: 0;
+    align-items: stretch;
+  }
+  .side-buttons button {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 0;
+    font-size: 20px;
+    box-shadow: 0 2px 6px #0001;
+    background: #ececec;
+    border: 1px solid #999;
+    color: #d11a1a; /* só o X em vermelho, personalize se quiser */
+    font-weight: bold;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .side-buttons button:not(:first-child) {
+    color: #262a33;
+  }
+  .side-buttons button:hover {
+    background: #f5dada;
+  }
+
+  /* Apenas mobile (até 600px): reduz e mantém mínimo, garante rolagem */
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .container {
+      padding: 10px;
+      margin: 0;
+      box-shadow: none;
+      max-width: 100%;
+    }
+    .top-bar {
+      flex-direction: column;
+      align-items: center;
+    }
+    .icon-row {
+      gap: 0;
+      overflow-x: auto;
+    }
+    .icon-row .icon-btn {
+      width: 44px;
+      height: 44px;
+      min-width: 36px;
+      min-height: 36px;
+    }
+    .icon-row .icon-btn img,
+    .icon-row .icon-btn svg {
+      width: 100%;
+      height: 100%;
+    }
+    button {
+      flex: 1 1 45%;
+      font-size: 12px;
+      padding: 8px;
+      margin: 4px 2px;
+    }
+    .table-container {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0;
+    }
+    .side-buttons {
+      margin-right: 3px;
+      gap: 6px;
+    }
+    .side-buttons button {
+      width: 26px;
+      height: 26px;
+      font-size: 16px;
+      margin-bottom: 0;
+    }
+
+    .table-container table {
+      width: auto;
+      overflow-x: auto;
+    }
+    #grafico { width: 100% !important; height: auto; }
+    /* Modal mobile */
+    #modal-content,
+    #modal-receita > div,
+    #modal-insumos > div {
+      min-width: unset !important;
+      max-width: 98vw !important;
+      width: 95% !important;
+      padding: 8px !important;
+      border-radius: 4px !important;
+      font-size: 15px !important;
+    }
+    #modal-receita table,
+    #modal-insumos table {
+      font-size: 13px !important;
+      min-width: 100% !important;
+      width: 100% !important;
+      overflow-x: auto !important;
+      display: block !important;
+    }
+    #modal-receita td, #modal-receita th,
+    #modal-insumos td, #modal-insumos th {
+      padding: 5px 2px !important;
+      word-break: break-word !important;
+    }
+  }
+/* MOSTRAR/ESCONDER side-fab no mobile */
+@media (max-width:600px) {
+  .side-fab {
+    display: none !important;
+  }
+  .side-fab.ativo {
+    display: flex !important;
+  }
+}
+
+  /* Desktop: mantém ícone grande e espaçado */
+  @media (min-width: 601px) {
+    .icon-row .icon-btn {
+      width: 80px;
+      height: 80px;
+    }
+    .icon-row .icon-btn svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  gap: 14px;
+  margin-top: -10px;
+  position: relative;
+}
+.top-icons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  position: relative;
+}
+@media (max-width:600px) {
+  /* Torna o <td colspan="2"> da linha .acoes-receita um flex-alinhado à ESQUERDA */
+  #modal-receita table#tabela-receita tfoot
+    tr.acoes-receita td[colspan="2"] {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0 !important;
+  }
+
+  /* Garante que os botões não estiquem em largura/flex */
+  #modal-receita table#tabela-receita tfoot
+    tr.acoes-receita button {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+}
+
+  @media (max-width: 600px) {
+   /* centraliza o botão Fechar no mobile */
+   #modal-receita table#tabela-receita tfoot tr.close-receita td {
+     display: flex !important;
+     justify-content: center !important;
+     padding: 8px 0 !important; /* mantém um pouco de espaçamento vertical */
+   }
+
+
+
+@media (max-width: 600px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-top: 0;
+  }
+  #logoHanier {
+    margin-bottom: 0;
+    width: 110px;
+    height: 30px;
+  }
+  .top-icons {
+    width: 100%;
+    justify-content: center;
+    gap: 14px;
+  }
+  .top-icons button {
+    font-size: 23px !important;
+    padding: 0 7px !important;
+    background: none;
+    border: none;
+  }
+}
+
+.titulo-container {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 10px 0 14px 0;
+  min-height: 38px;
+}
+
+.titulo-container h2 {
+  margin: 0;
+  font-size: 1.55em;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.btn-lapis {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 22px;
+  margin-left: 0;
+  transition: background 0.18s;
+}
+
+.btn-lapis:hover {
+  background: #ffeab2;
+  border-radius: 7px;
+}
+
+@media (max-width: 600px) {
+  .titulo-container {
+    justify-content: center;
+    min-height: 28px;
+    margin-bottom: 10px;
+  }
+  .titulo-container h2 {
+    font-size: 1.15em;
+    text-align: center;
+  }
+}
+
+
+</style>
+</head><body>
+<!-- +++ MENU LATERAL FIXO (flutuante) +++ -->
+<div class="side-fab" id="sideFab">
+  <button id="btnExcluirEtapa" title="Excluir etapa selecionada">✖</button>
+  <button id="btnInserirAcima" title="Inserir etapa acima">+</button>
+  <button id="btnSubir" title="Subir etapa selecionada">↑</button>
+  <button id="btnDescer" title="Descer etapa selecionada">↓</button>
+</div>
+ <div class="container">
+
+  <!-- +++ NOVO BLOCO: barra superior organizada para responsividade +++ -->
+<div class="top-bar">
+  <div id="logoHanier" aria-label="Logo Hanier"></div>
+  <div class="top-icons">
+    <button id="btnSalvar" title="Salvar etapas" style="background: none; border: none; cursor: pointer; padding: 2px; font-size: 24px;">
+      <!-- ...disquete... -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" stroke="#343a40" stroke-width="1.5" fill="#e3e7ed"/>
+        <rect x="7" y="15" width="10" height="4" rx="1" fill="#343a40"/>
+        <rect x="7" y="5" width="6" height="6" rx="1" stroke="#343a40" stroke-width="1.2" fill="white"/>
+      </svg>
+    </button>
+    <button id="btnCarregar" title="Carregar etapas" style="background: none; border: none; cursor: pointer; padding: 2px; font-size: 24px;">
+      <!-- ...ícone de pasta... -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" stroke="#0069d9" stroke-width="1.6" fill="#e3e7ed"/>
+        <path d="M12 12v4m0 0-2-2m2 2 2-2" stroke="#0069d9" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button id="btnPrintMenu" title="Imprimir" style="background:none; border:none; cursor:pointer; outline:none; padding:0 0 6px 0; font-size:27px;">
+      🖨️
+    </button>
+    <div id="print-options" style="display:none; position:absolute; right:0; top:38px; background:white; border:1px solid #aaa; border-radius:6px; box-shadow:0 2px 8px #0002; z-index:10;">
+      <button id="btnImprimirCusto" style="display:block; width:100%; border:none; background:none; padding:10px 16px; text-align:left;">Imprimir <b>com custo</b></button>
+      <button id="btnImprimirSemCusto" style="display:block; width:100%; border:none; background:none; padding:10px 16px; text-align:left;">Imprimir <b>sem custo</b></button>
+    </div>
+  </div>
+</div>
+
+<!-- +++ TÍTULO em LINHA SEPARADA +++ -->
+<div class="titulo-container">
+  <h2 id="titulo-principal">{{ titulo }}</h2>
+<button id="btnTitulo"
+  title="Editar título"
+  style="background: none; border: none; cursor: pointer; padding: 3px; font-size: 20px; margin: 0;">
+  ✏️
+</button>
+</div>
+    <div style="margin-bottom: 15px;">
+      <button id="btnNova">Novo</button>
+      <button id="btnEditar">Editar</button>
+      <button id="btnLimpar">Limpar</button>
+      <button id="btnReceita">Receita</button>
+      <button id="btnInsumos">Insumos</button>
+ </div>
+
+ <!-- +++ Ícones: Encher, Termoregulação, Injetar, Dosar, Patamar, Transbordo, Soltar, Aviso (agora usando <img>) +++ -->
+ <div id="icons-container" class="icon-row">
+   <button class="icon-btn" id="imgEncher" title="Encher Máquina">
+     <img src="{{ url_for('static', filename='Encher.svg') }}" alt="Encher Máquina" />
+   </button>
+   <button class="icon-btn" id="imgTermoreg" title="Termoregulação">
+     <img src="{{ url_for('static', filename='Termoregulação.svg') }}" alt="Termoregulação" />
+   </button>
+   <button class="icon-btn" id="imgInjetar" title="Injetar Produto">
+     <img src="{{ url_for('static', filename='Injetar.svg') }}" alt="Injetar Produto" />
+   </button>
+   <button class="icon-btn" id="imgDosar" title="Dosar Produto">
+     <img src="{{ url_for('static', filename='Dosar.svg') }}" alt="Dosar Produto" />
+   </button>
+   <button class="icon-btn" id="imgPatamar" title="Patamar">
+     <img src="{{ url_for('static', filename='Patamar.svg') }}" alt="Patamar" />
+   </button>
+   <button class="icon-btn" id="imgTransbordo" title="Transbordo">
+     <img src="{{ url_for('static', filename='Transbordo.svg') }}" alt="Transbordo" />
+   </button>
+   <button class="icon-btn" id="imgSoltar" title="Soltar Banho">
+     <img src="{{ url_for('static', filename='Soltar.svg') }}" alt="Soltar Banho" />
+   </button>
+   <button class="icon-btn" id="imgAviso" title="Aviso">
+     <img src="{{ url_for('static', filename='Aviso.svg') }}" alt="Aviso" />
+   </button>
+ </div>
+
+
+ <!-- ── NOVO: controles de Carga e Relação abaixo dos botões ── -->
+ <div id="config-inputs" style="margin-bottom:15px; display:flex; align-items:center; gap:20px;">
+   <label for="carga-input">Carga média (kg):</label>
+   <input id="carga-input" type="number" value="300" style="width:80px;">
+   <label for="relacao1-input">Relação de Banho 1:</label>
+   <input id="relacao1-input" type="number" value="8" style="width:80px;">
+ </div>
+
+
+
+    
+
+    <div class="table-container">
+        <div style="flex:1; overflow-x:auto;">
+      <table id="tabela-etapas">
+        <tr><th>Tipo de Etapa</th><th>Resumo</th><th>Tempo (min)</th></tr>
+        {% for etapa in etapas %}
+    <tr data-index="{{ loop.index0 }}">
+          <td>{{ etapa.tipo }}</td>
+          <td>{{ etapa.dados.resumo }}</td>
+          <td>{{ etapa.dados.tempo }}</td>
+        </tr>
+        {% endfor %}
+        </table>
+      </div>
+    </div>
+
+    <p>Tempo total: {{ tempo_total }}</p>
+    <h3>Gráfico de Temperatura × Tempo</h3>
+    <button id="btnGrafico">Gerar Gráfico</button>
+
+     <img id="grafico" src="" style="display:none; width:100%; max-width:800px; margin-top:10px;" alt="Gráfico de Tingimento">
+
+  </div>
+
+  <!-- modal de etapa -->
+  <div id="modal">
+    <div id="modal-content">
+      <h3>Nova Etapa</h3>
+      <label>Tipo de Etapa:</label>
+      <select id="tipo"></select>
+      <div id="campos-etapa"></div>
+      <button id="btnConfirmar">Confirmar</button>
+      <button id="btnFechar">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- modal de receita -->
+  <div id="modal-receita" style="display:none; position:fixed; top:0; left:0;
+       width:100%; height:100%; background:rgba(0,0,0,0.6);
+       justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:8px; min-width:300px;
+                 max-width:98vw; max-height:95vh; overflow:auto;">
+ <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h3>Receita</h3>
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+  
+  <button id="btnAjustarSequencia" style="padding:6px 12px; font-size:14px; cursor:pointer;">
+    Ajustar Sequência
+  </button>
+</div>
+      </div>
+      <table id="tabela-receita">
+        <thead>
+          <tr>
+            <th>Produto</th><th>Sequência</th><th>Preço (R$)</th>
+            <th>Quantidade</th><th>Unidade</th><th>R$/kg</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td><input id="rec-produto" placeholder="Produto"></td>
+            <td><input id="rec-sequencia" placeholder="Sequência"></td>
+            <td><input id="rec-preco" type="number" placeholder="Preço (R$)"></td>
+            <td><input id="rec-quantidade" type="number" placeholder="Quantidade"></td>
+            <td>
+              <select id="rec-percent">
+                <option value="%">%</option>
+                <option value="g/L">g/L</option>
+              </select>
+            </td>
+            <td><input id="rec-rskg" type="number" placeholder="R$/kg"></td>
+          </tr>
+          <tr>
+           <!-- Linha de total de custo (permanece igual) -->
+           <tr>
+             <td colspan="6" style="text-align:center; font-weight:bold; padding-top:8px;">
+               Custo total: R$ <span id="custo-total">0.00</span>
+             </td>
+           </tr>
+ 
+           <!-- Nova linha: ações à esquerda, 'Fechar' à direita -->
+                     <tr>
+             <td colspan="4" style="text-align:left; padding:8px 0;">
+               <button id="btnAddRec">Novo</button>
+               <button id="btnEditRec">Editar</button>
+               <button id="btnDelRec">Excluir</button>
+             </td>
+             <td colspan="2"></td>
+           </tr>
+           <tr class="close-receita">
+             <td colspan="6" style="text-align:center; padding:8px 0;">
+               <button onclick="fecharReceita()">Fechar</button>
+
+             </td>
+           </tr>
+      </table>
+    </div>
+  </div>
+
+  </div>  <!-- fechamento do modal-receita -->
+ <!-- modal de Insumos -->
+ <div id="modal-insumos" style="display:none; position:fixed; top:0; left:0;
+      width:100%; height:100%; background:rgba(0,0,0,0.6);
+      justify-content:center; align-items:center;">
+   <div style="background:white; padding:20px; border-radius:8px; min-width:300px;
+               max-width:98vw; max-height:95vh; overflow:auto;">
+     <h3>Insumos</h3>
+     <button id="btnCalcInsumos" style="margin-bottom:10px;">
+       Calcular Insumos
+     </button>
+     <table id="tabela-insumos">
+       <thead>
+         <tr>
+           <th>Insumo</th><th>Preço (R$)</th>
+           <th>Quantidade</th><th>Unidade</th><th>R$/kg</th>
+         </tr>
+       </thead>
+       <tbody></tbody>
+     </table>
+
+
+    <!-- ↧ novo espaço e tabela de Água ↧ -->
+    <br><br>
+    <table id="tabela-agua">
+      <thead>
+        <tr>
+          <th>Insumo</th>
+          <th>Preço (R$)</th>
+          <th>Quantidade</th>
+          <th>Unidade</th>
+          <th>L/kg</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+     <button onclick="fecharInsumos()">Fechar</button>
+   </div>
+ </div>
+
+
+<input type="file" id="fileInput" style="display:none;">
+  <script>
+
+  // ── Seus dados iniciais ──
+  const nomeMaquina = 'Hora máquina'
+  const etapasData  = {{ etapas_json  | safe }};
+  const receitaData = {{ receita_json | safe }};
+  const fileInput   = document.getElementById('fileInput');
+  let selectedIndex = null;
+  let editingIndex  = null;
+  const insumosData = [];    // ── NOVO: armazena somente Vapor e Hora máquina
+
+function proximaLetraSequencia() {
+  const letras = etapasData
+    .filter(et => et.tipo === 'Injetar Produto' || et.tipo === 'Dosagem de Produto')
+    .map(et => {
+      if (et.dados && et.dados.sequencia) return et.dados.sequencia.trim().toUpperCase();
+      const m = (et.dados && et.dados.resumo || '').match(/Seq\s*([A-Z])/i);
+      if (m) return m[1].toUpperCase();
+      return null;
+    })
+    .filter(Boolean);
+
+  let ultima = letras.length ? letras[letras.length - 1] : null;
+  if (!ultima || ultima.length === 0) return 'A';
+  let next = ultima.charCodeAt(0) + 1;
+  if (next > 'Z'.charCodeAt(0)) next = 'A'.charCodeAt(0);
+  return String.fromCharCode(next);
+}
+
+
+  function getRelacaoBanho() {
+    const v = parseFloat(document.getElementById('relacao1-input').value);
+    return isNaN(v) ? 1 : v;
+  }
+
+  // ── PARTE 2: steamChart e funções ──
+
+  // 1) Tabela original: kg vapor / m³
+  const steamChart = {
+    20: { 40: 34,  60: 70,  80:108, 100:148, 120:190, 130:213, 135:224 },
+    30: { 40: 18,  60: 54,  80: 92, 100:131, 120:174, 130:196, 135:208 },
+    40: {    60: 37,  80: 75, 100:114, 120:157, 130:179, 135:191 },
+    50: {    60: 20,  80: 57, 100: 97, 120:140, 130:162, 135:174 },
+    60: {        80: 40, 100: 80, 120:122, 130:144, 135:156 },
+    70: {        80: 22, 100: 62, 120:104, 130:127, 135:139 },
+    80: {            100:44, 120: 86, 130:100, 135:120 }
+  };
+
+// 4) Tabela de consumo de vapor para “Patamar” (Kg vapor / m³ / h)
+const holdChart = {
+  40: 7,   45: 8.75, 50: 10.5, 55: 12.25, 60: 14,
+  65: 15.75,70: 17.5,75: 19.25,80: 21,    85: 23,
+  90: 25,  95: 27,   100:29,   105:30.55,110:32,
+  115:33.5,120:35,  125:36.5, 130:38,   135:40
+};
+
+// reutiliza o getNearestValue para achar o valor mais próximo
+function getNearestHold(temp) {
+  const temps = Object.keys(holdChart).map(Number);
+  const nearest = temps.reduce((best, cur) =>
+    Math.abs(cur - temp) < Math.abs(best - temp) ? cur : best
+  );
+  return { temp: nearest, rate: holdChart[nearest] };
+}
+
+// 3’) agora somamos também o vapor de Patamar
+function calcularVaporTotal(volumeL) {
+  const volumeM3 = volumeL / 1000; // L → m³
+  let totalVapor = 0;
+
+  // ── Aquecimento (Termoregulação) ──
+  etapasData
+    .filter(et => et.tipo === 'Termoregulação')
+    .forEach(et => {
+      const m = et.dados.resumo.match(/de\s+(\d+)→(\d+)/);
+      if (!m) return;
+      const Ti = Number(m[1]), Tf = Number(m[2]);
+      if (Tf <= Ti) return;               // só aquecimento
+      const dT = Tf - Ti;
+      const kgPerM3 = 1.93 * dT;           // seu coeficiente ajustado
+      totalVapor += volumeM3 * kgPerM3;
+    });
+
+  // ── “Patamar” (manter temperatura constante) ──
+  etapasData
+    .filter(et => et.tipo === 'Patamar')
+    .forEach(et => {
+      // resumo exemplo: "80°C por 15 min"
+      const m = et.dados.resumo.match(/(\d+)°C por (\d+)\s*min/);
+      if (!m) return;
+      const T  = Number(m[1]);
+      const mins = Number(m[2]);
+      // obter taxa exata ou próxima (Kg/m³/h)
+      let { temp: usedT, rate } = holdChart[T] != null
+        ? { temp: T, rate: holdChart[T] }
+        : getNearestHold(T);
+      if (usedT !== T) {
+        console.warn(`Patamar ${T}°C não exato, usando ${usedT}°C → ${rate} kg/m³·h`);
+      }
+      const hours = mins / 60;
+      totalVapor += volumeM3 * rate * hours;
+    });
+
+  return totalVapor;
+}
+  
+// ── Função nova: calcula custo de Hora máquina (0,8 R$/h) ──
+function calcularHoraMaquina() {
+  // soma todos os tempos em minutos
+  const tempoTotalMin = etapasData.reduce((sum, et) => sum + et.dados.tempo, 0);
+  // converte em horas e multiplica pelo custo unitário
+  const custo = (tempoTotalMin / 60) ;
+  // devolve com duas casas decimais
+  return parseFloat(custo.toFixed(2));
+}
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+
+
+      
+    // ── Referências aos ícones ──
+    const imgEncher     = document.getElementById('imgEncher');
+    const imgTermoreg   = document.getElementById('imgTermoreg');
+    const imgInjetar    = document.getElementById('imgInjetar');
+    const imgDosar      = document.getElementById('imgDosar');
+    const imgPatamar    = document.getElementById('imgPatamar');
+    const imgTransbordo = document.getElementById('imgTransbordo');
+    const imgSoltar     = document.getElementById('imgSoltar');
+    const imgAviso      = document.getElementById('imgAviso');
+
+    // ── Ao clicar em cada ícone, abre modal com tipo já selecionado ──
+    imgEncher.addEventListener('click', () => {
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+      document.getElementById('btnConfirmar').textContent   = 'Confirmar';
+      abrirModal();
+      const tipoSelect = document.getElementById('tipo');
+      tipoSelect.value = 'Encher Máquina';
+      mostrarCamposEtapa();
+    });
+
+    imgTermoreg.addEventListener('click', () => {
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+      document.getElementById('btnConfirmar').textContent   = 'Confirmar';
+      abrirModal();
+      const tipoSelect = document.getElementById('tipo');
+      tipoSelect.value = 'Termoregulação';
+      mostrarCamposEtapa();
+    });
+
+    imgInjetar.addEventListener('click', () => {
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+      document.getElementById('btnConfirmar').textContent   = 'Confirmar';
+      abrirModal();
+      const tipoSelect = document.getElementById('tipo');
+      tipoSelect.value = 'Injetar Produto';
+      mostrarCamposEtapa();
+    });
+
+    imgDosar.addEventListener('click', () => {
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+      document.getElementById('btnConfirmar').textContent   = 'Confirmar';
+      abrirModal();
+      const tipoSelect = document.getElementById('tipo');
+      tipoSelect.value = 'Dosagem de Produto';
+      mostrarCamposEtapa();
+    });
+
+    imgPatamar.addEventListener('click', () => {
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+      document.getElementById('btnConfirmar').textContent   = 'Confirmar';
+      abrirModal();
+      const tipoSelect = document.getElementById('tipo');
+      tipoSelect.value = 'Patamar';
+      mostrarCamposEtapa();
+    });
+
+    imgTransbordo.addEventListener('click', () => {
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+      document.getElementById('btnConfirmar').textContent   = 'Confirmar';
+      abrirModal();
+      const tipoSelect = document.getElementById('tipo');
+      tipoSelect.value = 'Transbordo';
+      mostrarCamposEtapa();
+    });
+
+    imgSoltar.addEventListener('click', async () => {
+      // Calcula tempo e resumo padrão
+      const tempo = 3;
+      const temperatura = lastStepTemp();
+      const resumo = 'Soltar Banho';
+
+  // Monta dados igual ao confirmarEtapa
+      const dados = { resumo, tempo, temperatura, gradiente: 0 };
+
+  // Adiciona a etapa direto pelo endpoint Flask
+      await fetch('/adicionar_etapa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'Soltar Banho', dados })
+      });
+
+      etapasData.push({ tipo: 'Soltar Banho', dados });
+  // Refaz a tabela e o gráfico (sem recarregar a página inteira)
+      atualizarTabelaEtapas();
+    });
+
+    imgAviso.addEventListener('click', () => {
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+      document.getElementById('btnConfirmar').textContent   = 'Confirmar';
+      abrirModal();
+      const tipoSelect = document.getElementById('tipo');
+      tipoSelect.value = 'Aviso';
+      mostrarCamposEtapa();
+    });
+
+
+// referências
+      const btnNova      = document.getElementById('btnNova');
+      const btnEditar    = document.getElementById('btnEditar');
+      const btnExcluirEtapa = document.getElementById('btnExcluirEtapa');
+      const btnSubir     = document.getElementById('btnSubir');
+      const btnDescer    = document.getElementById('btnDescer');
+      const btnLimpar    = document.getElementById('btnLimpar');
+      const btnTitulo    = document.getElementById('btnTitulo');
+      const btnSalvar    = document.getElementById('btnSalvar');
+
+      const btnCarregar  = document.getElementById('btnCarregar');
+     // ➌ abre o diálogo quando clicar no botão
+
+   
+
+
+      const btnImprimir  = document.getElementById('btnImprimir');
+      const btnReceita   = document.getElementById('btnReceita');
+      const btnInsumos   = document.getElementById('btnInsumos');
+      const btnInserirAcima = document.getElementById('btnInserirAcima');
+      btnInserirAcima.addEventListener('click', inserirEtapaAcima);
+
+
+      const btnGrafico   = document.getElementById('btnGrafico');
+      const tipoSelect   = document.getElementById('tipo');
+      const btnConfirmar = document.getElementById('btnConfirmar');
+      const btnFechar    = document.getElementById('btnFechar');
+      const tabela       = document.getElementById('tabela-etapas');
+
+    // Listener do botão dentro de Insumos
+    document.getElementById('btnCalcInsumos')
+      .addEventListener('click', () => {
+    // 1) Puxar carga e relação de banho da tela principal
+    let carga = parseFloat(document.getElementById('carga-input').value);
+    let rel   = parseFloat(document.getElementById('relacao1-input').value);
+    // valida se veio carga e relação, senão pergunta
+    if (isNaN(carga) || carga <= 0) {
+      carga = parseFloat(prompt('Qual carga média (kg)?', '300'));
+      if (isNaN(carga) || carga <= 0) {
+        return alert('Carga inválida.');
+      }
+      document.getElementById('carga-input').value = carga;
+    }
+    if (isNaN(rel) || rel <= 0) {
+      rel = parseFloat(prompt('Qual relação de banho?', '8'));
+      if (isNaN(rel) || rel <= 0) {
+        return alert('Relação de banho inválida.');
+      }
+      document.getElementById('relacao1-input').value = rel;
+    }
+    // 2) Volume = carga (kg) × relação
+    const vol       = carga * rel;
+    const totalVapor = calcularVaporTotal(vol);
+    const totalL     = totalVapor; // usar totalVapor, não totalKg
+
+  // ── Atualiza somente Insumos ──
+  // Vapor
+  let idxV = insumosData.findIndex(r => r.produto === 'Vapor');
+  if (idxV >= 0) {
+    insumosData[idxV].quantidade = totalVapor;
+    insumosData[idxV].unidade    = 'Kg Vapor';
+    insumosData[idxV].rskg       = (insumosData[idxV].preco * totalVapor) / carga;
+  } else {
+    insumosData.push({
+      produto:    'Vapor',
+      preco:      0.08,
+      quantidade: totalVapor,
+      unidade:    'Kg Vapor',
+      rskg:       (0.08 * totalVapor) / carga
+    });
+  }
+
+    // definir o nome antes de usar
+
+    // Hora máquina
+    // ← Definir custoHora antes de usar
+    const custoHora = calcularHoraMaquina();
+    let idxH = insumosData.findIndex(r => r.produto === 'Hora máquina');
+      if (idxH >= 0) {
+    insumosData[idxH].quantidade = custoHora;
+    insumosData[idxH].unidade    = 'h';  
+    insumosData[idxH].rskg       = (insumosData[idxH].preco * custoHora);
+  } else {
+    insumosData.push({
+      produto:    'Hora máquina',
+      preco:      0.80,
+      quantidade: custoHora,
+      unidade:    'h',
+      rskg:       (0.80 * custoHora)
+    });
+  }
+
+        // ── 3. Atualiza imediatamente a tabela de Insumos ──
+        console.log('INSUMOS →', receitaData.filter(r=>r.produto==='Vapor'||r.produto===nomeMaquina));
+        atualizarTabelaInsumos();
+fetch('/atualizar_insumos', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(insumosData)
+    });
+   });  // fecha o listener do btnCalcInsumos
+
+
+
+      // Nova Etapa
+      btnNova.addEventListener('click', () => {
+        editingIndex = null;
+        document.querySelector('#modal-content h3').textContent = 'Nova Etapa';
+        btnConfirmar.textContent = 'Confirmar';
+        abrirModal();
+      });
+
+      // Confirmar / Fechar / Mudança de tipo / Gráfico / Editar / Excluir
+      btnConfirmar.addEventListener('click', confirmarEtapa);
+      btnFechar   .addEventListener('click', fecharModal);
+      tipoSelect  .addEventListener('change', mostrarCamposEtapa);
+      btnGrafico  .addEventListener('click', gerarGrafico);
+      btnEditar   .addEventListener('click', editarEtapa);
+      btnExcluirEtapa.addEventListener('click', excluirEtapa);
+
+      // Subir / Descer
+      btnSubir   .addEventListener('click', () => {
+        if (selectedIndex === null) return alert('Selecione uma etapa.');
+        subirEtapa();
+      });
+      btnDescer  .addEventListener('click', () => {
+        if (selectedIndex === null) return alert('Selecione uma etapa.');
+        descerEtapa();
+      });
+
+      // Outras ações
+      btnLimpar  .addEventListener('click', limparEtapas);
+      btnTitulo  .addEventListener('click', editarTitulo);
+      btnSalvar  .addEventListener('click', salvarEtapas);
+      btnCarregar.addEventListener('click', () => fileInput.click());
+      const btnImprimirCusto    = document.getElementById('btnImprimirCusto');
+      const btnImprimirSemCusto = document.getElementById('btnImprimirSemCusto');
+
+
+
+;
+      fileInput  .addEventListener('change', uploadDados);;
+
+      // Selecionar linha
+      tabela.querySelectorAll('tr[data-index]')
+            .forEach(tr => tr.addEventListener('click', selecionarLinha));
+
+        // ── Pré-carrega e listeners da Receita ──
+        atualizarTabelaReceita();
+
+   // Ao mudar relação de banho, refaz todos os cálculos de R$/kg
+       document.getElementById('relacao1-input')
+         .addEventListener('input', () => {
+    const rel = parseFloat(document.getElementById('relacao1-input').value) || 8;
+           receitaData.forEach(r => {
+             if (r.percent === '%') {
+               r.rskg = r.preco * r.quantidade / 100;
+             } else {
+               r.rskg = r.preco * r.quantidade * rel / 1000;
+             }
+      // ── Novo: reaplica R$/kg para Vapor e Hora máquina
+      if (r.produto === 'Vapor' || r.produto === 'Hora máquina') {
+       r.rskg = r.preco * r.quantidade / 300;
+      }
+           });
+           atualizarTabelaReceita();
+         });
+
+
+
+
+
+
+
+        btnReceita
+          .addEventListener('click', abrirReceita);
+        btnInsumos.addEventListener('click', abrirInsumos);
+ 
+// Botão Ajustar Sequência
+document.getElementById('btnAjustarSequencia')
+  .addEventListener('click', () => {
+    // Ordena por letra de sequência (A, B, C…)
+    receitaData.sort((a, b) => {
+      const sa = (a.sequencia || '').toUpperCase();
+      const sb = (b.sequencia || '').toUpperCase();
+      return sa.localeCompare(sb);
+    });
+    // Reatualiza a tabela
+    atualizarTabelaReceita();
+    // Envia para o servidor
+    sincronizarReceitaComServidor();
+  });
+
+
+ 
+
+  // Novo: btnEditRec só edita a linha selecionada
+       document.getElementById('btnEditRec')
+         .addEventListener('click', () => {
+           if (selectedRec === null) {
+             alert('Selecione uma linha para editar.');
+           } else {
+             editaReceita();
+        // não limpamos a seleção, para você continuar no modo edição
+           }
+         });
+ 
+        document.getElementById('btnDelRec')
+          .addEventListener('click', excluiReceita);
+  // Botão do menu de impressão
+  const btnPrintMenu = document.getElementById('btnPrintMenu');
+  const printOptions = document.getElementById('print-options');
+  btnPrintMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
+    printOptions.style.display = (printOptions.style.display === 'none' || !printOptions.style.display) ? 'block' : 'none';
+  });
+  document.body.addEventListener('click', function() {
+    printOptions.style.display = 'none';
+  });
+  printOptions.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+  document.getElementById('btnImprimirCusto').addEventListener('click', () => {
+    printOptions.style.display = 'none';
+    imprimir(true);
+  });
+  document.getElementById('btnImprimirSemCusto').addEventListener('click', () => {
+    printOptions.style.display = 'none';
+    imprimir(false);
+  });
+    });
+
+function selecionarLinha(evt) {
+  const tr = evt.currentTarget;
+  const jaSelecionada = tr.classList.contains('selected');
+
+  // limpa todas as linhas
+  document.querySelectorAll('#tabela-etapas tr.selected')
+          .forEach(r => r.classList.remove('selected'));
+
+  if (!jaSelecionada) {
+    tr.classList.add('selected');
+    selectedIndex = +tr.dataset.index;
+    // Mostrar o menu lateral só no mobile
+    if (window.innerWidth <= 600) {
+      document.getElementById('sideFab').classList.add('ativo');
+    }
+  } else {
+    selectedIndex = null;
+    // Esconde o menu lateral no mobile
+    if (window.innerWidth <= 600) {
+      document.getElementById('sideFab').classList.remove('ativo');
+    }
+  }
+}
+
+
+
+
+    function abrirModal() {
+      const tipos = [
+        'Encher Máquina','Injetar Produto','Dosagem de Produto',
+        'Termoregulação','Patamar','Transbordo','Soltar Banho','Aviso'
+      ];
+      document.getElementById('tipo').innerHTML =
+        tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+      document.getElementById('modal').style.display = 'flex';
+      mostrarCamposEtapa();
+    }
+
+    function fecharModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+function mostrarCamposEtapa() {
+  const tipo = document.getElementById('tipo').value;
+  const campos = document.getElementById('campos-etapa');
+  let html = '';
+  switch (tipo) {
+    case 'Encher Máquina':
+      html = `
+        <label>Água:</label>
+        <select id="agua"><option>Quente</option><option>Fria</option></select>
+        <label>Relação de Banho (1:x):</label>
+        <input id="relacao" type="number" inputmode="decimal" placeholder="Ex: 10">
+      `;
+      break;
+
+case 'Injetar Produto':
+  html = `
+    <label>Sequência:</label>
+    <input id="sequencia" type="text" value="${proximaLetraSequencia()}" maxlength="2" style="width:40px"><br>
+    <label>Água:</label>
+    <select id="agua_inj"><option>Limpa</option><option>Retorno</option></select>
+  `;
+  break;
+
+case 'Dosagem de Produto':
+  html = `
+    <label>Sequência do Produto:</label>
+    <input id="sequencia" type="text" value="${proximaLetraSequencia()}" maxlength="2" style="width:40px"><br>
+    <label>Tempo de Dosagem (min):</label>
+    <input id="tempo_dos" type="number" inputmode="numeric" placeholder="Ex: 5"><br>
+    <label>Curva (opcional):</label>
+    <input id="curva_dos" type="text" placeholder="Ex: rampa"><br>
+    <label>Água:</label>
+    <select id="agua_dos"><option>Limpa</option><option>Retorno</option></select>
+  `;
+  break;
+
+case 'Termoregulação': {
+  html = `
+    <div style="display:flex; flex-direction:column; gap: 8px;">
+      <div>
+        <label>Temp. atual (°C):</label>
+        <input id="temp_atual" type="number" inputmode="numeric" value="${lastStepTemp()}"><br>
+      </div>
+      <div>
+        <label>Temp. final (°C):</label>
+        <input id="temp_final" type="number" inputmode="numeric"><br>
+      </div>
+      <div>
+        <label>Gradiente (°C/min):</label>
+        <input id="gradiente" type="number" inputmode="decimal" placeholder="Ex: 3"><br>
+      </div>
+
+      <!-- Esse div ficará oculto/enabled quando marcar a checkbox -->
+      <div id="campo-tempo-patamar" style="display: none; margin-top: 12px;">
+        <label>Tempo do Patamar (min):</label>
+        <input id="tempo_pat_extra" type="number" inputmode="numeric" placeholder="Ex: 10">
+      </div>
+    </div>
+
+    <!-- +++ Checkbox de Patamar posicionada no canto superior direito do modal +++ -->
+    <div id="checkboxPatamar-container"
+         style="
+           position: absolute;
+           top: 16px;
+           right: 16px;
+           font-size: 14px;
+           font-weight: normal;
+         ">
+      <label>
+        <input id="checkboxPatamar" type="checkbox">
+        Patamar
+      </label>
+    </div>
+  `;
+  break;
+}
+
+    case 'Patamar':
+      html = `
+        <label>Temperatura (°C):</label>
+        <input id="temp_pat" type="number" inputmode="numeric" value="${lastStepTemp()}">
+        <label>Tempo (min):</label>
+        <input id="tempo_pat" type="number" inputmode="numeric">
+      `;
+      break;
+
+    case 'Transbordo':
+      html = `
+        <label>Relação (1:x):</label><input id="rt_val" type="number" inputmode="numeric">
+        
+        <label>Tempo (min):</label><input id="tempo_tr" type="number" inputmode="numeric">
+      `;
+      break;
+
+    case 'Soltar Banho':
+      html = `<p>Soltar Banho</p>`;
+      break;
+
+    case 'Aviso':
+   html = `
+     <label>Aviso:</label>
+     <select id="aviso">
+       <option>Amostra</option>
+       <option>Medir Densidade</option>
+       <option>Medir pH</option>
+       <option>Carregar máquina</option>
+       <option>Descarregar máquina</option>
+       <option>Buscar costura</option>
+     </select>
+     <div id="ph-campos"></div>
+   `;
+   break;
+  }
+  campos.innerHTML = html;
+  const aviso = document.getElementById('aviso');
+  if (aviso) {
+    aviso.onchange = e => {
+      document.getElementById('ph-campos').innerHTML =
+        e.target.value === 'Medir pH'
+        ? '<label>Faixa de pH:</label><input id="faixa_ph" type="text">'
+        : '';
+    };
+  }
+
+
+  // +++ Associar listener à checkbox “Patamar” que mostra/oculta campo de tempo +++
+  const chkPat = document.getElementById('checkboxPatamar');
+  if (chkPat) {
+    chkPat.addEventListener('change', () => {
+      const divTempo = document.getElementById('campo-tempo-patamar');
+      divTempo.style.display = chkPat.checked ? 'block' : 'none';
+    });
+  }
+}
+
+
+    function lastStepTemp() {
+      if (!etapasData || etapasData.length === 0) return 0;
+      const last = etapasData[etapasData.length - 1];
+      return last.dados && last.dados.temperatura != null
+        ? Number(last.dados.temperatura)
+        : 0;
+    }
+    async function inserirEtapaAcima() {
+      if (selectedIndex === null) {
+        alert('Selecione uma linha para inserir acima.');
+        return;
+      }
+  // Salva o índice de inserção para usar depois no modal
+      window.indiceInsercao = selectedIndex;
+      editingIndex = null;
+      document.querySelector('#modal-content h3').textContent = 'Nova Etapa (acima)';
+      document.getElementById('btnConfirmar').textContent = 'Confirmar';
+      abrirModal();
+    }
+async function confirmarEtapa() {
+    const tipo = document.getElementById('tipo').value;
+    let tempo = 0, temperatura = 0, resumo = '';
+    let gradiente = 0;
+
+  // Variáveis para “Patamar”
+    let adicionarPatamar = false;
+    let tempoPatExtra = 0;
+
+    switch (tipo) {
+        case 'Encher Máquina': {
+            const agua = document.getElementById('agua').value;
+            const rel = document.getElementById('relacao1-input').value;
+            tempo = 3;
+            temperatura = (agua === 'Quente' ? 40 : 25);
+            resumo = `Água ${agua}, 1:${rel}`;
+            break;
+        }
+        case 'Injetar Produto': {
+            const seq = document.getElementById('sequencia').value || '';
+            const aguaInj = document.getElementById('agua_inj').value;
+            tempo = 2;
+            temperatura = lastStepTemp();
+            resumo = `Seq ${seq}, água ${aguaInj}`;
+            break;
+        }
+        case 'Dosagem de Produto': {
+            const seq = document.getElementById('sequencia').value || '';
+            const td = parseFloat(document.getElementById('tempo_dos').value) || 0;
+            const curva = document.getElementById('curva_dos').value;
+            const agua = document.getElementById('agua_dos').value;
+            tempo = td;
+            temperatura = lastStepTemp();
+            resumo = `Seq ${seq}, Dosagem: ${td} min${curva ? `, curva ${curva}` : ''}, água ${agua}`;
+            break;
+        }
+        case 'Termoregulação': {
+            const t0 = parseFloat(document.getElementById('temp_atual').value) || 0;
+            const t1 = parseFloat(document.getElementById('temp_final').value) || 0;
+            const gradInput = parseFloat(document.getElementById('gradiente').value);
+            gradiente = (gradInput === 0 || isNaN(gradInput)) ? 5 : gradInput;
+            const rawTempo = Math.abs(t1 - t0) / gradiente;
+            tempo = Math.round(rawTempo);
+            temperatura = t1;
+            resumo = `${t1 > t0 ? 'Aquecer' : 'Resfriar'} de ${t0}→${t1}°C, ${gradInput}°C/min`;
+
+      // Verificar se “Patamar” foi marcado:
+            const chkPat = document.getElementById('checkboxPatamar');
+            if (chkPat && chkPat.checked) {
+              adicionarPatamar = true;
+              tempoPatExtra = parseFloat(document.getElementById('tempo_pat_extra').value) || 0;
+            }
+            break;
+          }
+        case 'Patamar': {
+            const tp = parseFloat(document.getElementById('temp_pat').value) || 0;
+            const tm = parseFloat(document.getElementById('tempo_pat').value) || 0;
+            tempo = tm;
+            temperatura = tp;
+            resumo = `${tp}°C por ${tm} min`;
+            break;
+        }
+        case 'Transbordo': {
+            const rb = parseFloat(document.getElementById('rt_val').value) || 0;
+            const ttr = parseFloat(document.getElementById('tempo_tr').value) || 0;
+            tempo = ttr;
+            temperatura = 0;  // ou lastStepTemp() se quiser manter, mas não precisa
+            resumo = `1:${rb}, ${ttr} min`;
+            break;
+        }
+        case 'Soltar Banho':
+            tempo = 3;
+            temperatura = 0;
+            resumo = 'Soltar Banho';
+            break;
+        case 'Aviso': {
+            const av = document.getElementById('aviso').value;
+            const ph = document.getElementById('faixa_ph')?.value;
+            if (av === "Carregar máquina" || av === "Descarregar máquina" || av === "Buscar costura") {
+                tempo = 5;
+                temperatura = lastStepTemp();
+                resumo = av;
+            } else {
+                tempo = 5;
+                temperatura = lastStepTemp();
+                resumo = ph ? `${av} (pH ${ph})` : av;
+            }
+            break;
+        }
+    }
+
+
+
+    // Monta o objeto dados
+    const dados = { resumo, tempo, temperatura, gradiente };
+    if (tipo === 'Injetar Produto' || tipo === 'Dosagem de Produto')
+        dados.sequencia = document.getElementById('sequencia').value;
+    if (tipo === 'Injetar Produto')
+        dados.agua = document.getElementById('agua_inj').value;
+    if (tipo === 'Dosagem de Produto')
+        dados.agua = document.getElementById('agua_dos').value;
+
+    // LOG PARA DEBUG
+    console.log('confirmarEtapa → window.indiceInsercao=', window.indiceInsercao, 'editingIndex=', editingIndex, 'tipo=', tipo, 'dados=', dados);
+
+    // ======== Fluxo completo de inserção/edição ========
+    if (window.indiceInsercao !== undefined) {
+      // 1) Cria Termoregulação na posição indicada
+      await fetch(`/inserir_etapa/${window.indiceInsercao}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, dados }),
+      });
+
+      // 2) Se “Patamar” estava marcado, insere logo após
+      if (adicionarPatamar) {
+        const dadosPat = {
+          resumo: `${temperatura}°C por ${tempoPatExtra} min`,
+          tempo: tempoPatExtra,
+          temperatura: temperatura,
+          gradiente: 0,
+        };
+        await fetch(`/inserir_etapa/${window.indiceInsercao + 1}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tipo: 'Patamar', dados: dadosPat }),
+        });
+      }
+
+      window.indiceInsercao = undefined;
+        // 2) atualiza o array localmente
+
+
+               // 3) fecha o modal e redesenha só a tabela + gráfico
+      fecharModal();
+      location.reload();
+
+      return;
+
+    } else if (editingIndex !== null) {
+      // Apenas edita Termoregulação existente
+      await fetch(`/editar_etapa/${editingIndex}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, dados }),
+      });
+      fecharModal();
+      location.reload();
+      return;
+
+    } else {
+      // 1) Adiciona Termoregulação ao fim
+      await fetch('/adicionar_etapa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, dados }),
+      });
+
+      // 2) Se “Patamar” marcado, adiciona Patamar em sequência
+      if (adicionarPatamar) {
+        const dadosPat2 = {
+          resumo: `${temperatura}°C por ${tempoPatExtra} min`,
+          tempo: tempoPatExtra,
+          temperatura: temperatura,
+          gradiente: 0,
+        };
+        await fetch('/adicionar_etapa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tipo: 'Patamar', dados: dadosPat2 }),
+        });
+      }
+      fecharModal();
+      location.reload();
+      return;
+    }
+}  // <-- Fecha async function confirmarEtapa corretamente
+
+    function gerarGrafico() {
+      const img = document.getElementById('grafico');
+      img.src   = '/grafico.png?' + Date.now();
+      img.style.display = 'block';
+    }
+
+    async function editarEtapa() {
+      if (selectedIndex === null) {
+        return alert('Selecione uma etapa.');
+      }
+      editingIndex = selectedIndex;
+      document.querySelector('#modal-content h3').textContent = 'Editar Etapa';
+      document.getElementById('btnConfirmar').textContent = 'Salvar';
+      abrirModal();
+      const et = etapasData[editingIndex];
+      document.getElementById('tipo').value = et.tipo;
+      mostrarCamposEtapa();
+      Object.entries(et.dados).forEach(([k, v]) => {
+        const map = {
+          'Sequência do Produto':'sequencia',
+          'Tempo de Dosagem':'tempo_dos',
+          'Curva de Dosagem':'curva_dos',
+          'Água':'agua',
+          'Água de Injeção':'agua_inj',
+          'Relação de Banho':'relacao',
+          'Temp. atual':'temp_atual',
+          'Temp. final':'temp_final',
+          'Gradiente':'gradiente',
+          'Temperatura':'temp_pat',
+          'Tempo':'tempo_pat',
+          'Relação':'rt_val',
+          'Temp. Inicial':'ti',
+          'Temp. Final':'tf',
+          'Aviso':'aviso',
+          'Faixa de pH':'faixa_ph'
+        };
+        const el = document.getElementById(map[k] || k);
+        if (el) el.value = v;
+      });
+ // +++ ADICIONE ESTE BLOCO ABAIXO +++
+  if (et.tipo === 'Dosagem de Produto' && et.dados.agua) {
+    document.getElementById('agua_dos').value = et.dados.agua;
+  }
+    }
+
+    async function excluirEtapa() { if (selectedIndex === null) return alert('Selecione.'); await fetch(`/excluir_etapa/${selectedIndex}`,{method:'POST'}); location.reload(); }
+
+    async function subirEtapa() {
+      if (selectedIndex === null) return alert('Selecione uma etapa.');
+      const oldIndex = selectedIndex;
+      const resp = await fetch(`/subir_etapa/${oldIndex}`, { method: 'POST' });
+      if (!resp.ok) return alert('Falha ao subir etapa.');
+
+      const table = document.getElementById('tabela-etapas');
+      const rows = Array.from(table.querySelectorAll('tr[data-index]'));
+      const tr = rows.find(r => +r.dataset.index === oldIndex);
+      const idx = rows.indexOf(tr);
+      if (idx > 0) {
+        const prevTr = rows[idx - 1];
+        const parent = tr.parentNode;
+        parent.insertBefore(tr, prevTr);
+        // atualiza os índices
+        tr.dataset.index    = oldIndex - 1;
+        prevTr.dataset.index = oldIndex;
+        // mantém seleção
+        rows.forEach(r => r.classList.remove('selected'));
+        tr.classList.add('selected');
+        selectedIndex = oldIndex - 1;
+      }
+    }
+
+    async function descerEtapa() {
+      if (selectedIndex === null) return alert('Selecione uma etapa.');
+      const oldIndex = selectedIndex;
+      const resp = await fetch(`/descer_etapa/${oldIndex}`, { method: 'POST' });
+      if (!resp.ok) return alert('Falha ao descer etapa.');
+
+      const table = document.getElementById('tabela-etapas');
+      const rows = Array.from(table.querySelectorAll('tr[data-index]'));
+      const tr = rows.find(r => +r.dataset.index === oldIndex);
+      const idx = rows.indexOf(tr);
+      if (idx < rows.length - 1) {
+        const nextTr = rows[idx + 1];
+        const parent = tr.parentNode;
+        parent.insertBefore(tr, nextTr.nextSibling);
+        // atualiza os índices
+        tr.dataset.index     = oldIndex + 1;
+        nextTr.dataset.index = oldIndex;
+        // mantém seleção
+        rows.forEach(r => r.classList.remove('selected'));
+        tr.classList.add('selected');
+        selectedIndex = oldIndex + 1;
+      }
+    }
+
+
+    async function limparEtapas() {
+      if (!confirm('Remover todas?')) return;
+      // manda o clear pro servidor (já limpa também session['receita'])
+      await fetch('/limpar_etapas', { method: 'POST' });
+      // limpa também no cliente
+      receitaData.length = 0;
+      atualizarTabelaReceita();
+      // limpa o título na interface
+      document.getElementById('titulo-principal').textContent = '';
+      // recarrega tudo (etapas + receita zeradas)
+      location.reload();
+    }
+
+    async function editarTitulo()  { const n=prompt('Novo título:','{{ titulo }}'); if (n!=null) { await fetch('/atualizar_titulo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({titulo:n})}); location.reload(); } }
+
+
+ async function salvarEtapas() {
+    // monta o objeto completo com etapas e receita
+    const titulo = document.getElementById('titulo-principal').textContent;
+    const payload = {
+      etapas: etapasData,
+      receita: receitaData,
+      titulo: titulo         // <-- ADICIONE esta linha para salvar o título junto!
+
+    };
+    
+    const data = JSON.stringify(payload, null, 2);
+
+   if (window.showSaveFilePicker) {
+     try {
+          // em vez de 'etapas.json', use o título
+          const suggestedName = titulo.replace(/\s+/g,'_') + '.json';
+          const handle = await window.showSaveFilePicker({
+            suggestedName,
+         types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }]
+       });
+       const writable = await handle.createWritable();
+       await writable.write(data);
+       await writable.close();
+     } catch (err) {
+       console.error('Save cancelled or failed:', err);
+     }
+   } else {
+        // fallback: cria blob e usa título como nome
+        const filename = titulo.replace(/\s+/g,'_') + '.json';
+        const blob     = new Blob([data], { type: 'application/json' });
+        const url      = URL.createObjectURL(blob);
+        const a        = document.createElement('a');
+        a.href         = url;
+        a.download     = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+   }
+ }
+
+    function uploadDados(evt)     { const f=evt.target.files[0]; if (!f) return; const fd=new FormData(); fd.append('file',f); fetch('/carregar_dados',{method:'POST',body:fd}).then(r=>r.json()).then(j=> j.success?location.reload():alert('Erro:'+j.error)); }
+
+async function imprimir(comCusto) {
+  const url = `/imprimir_pdf_inline?com_custo=${comCusto}`;
+
+  // Se o navegador suportar e estivermos em mobile
+  if (navigator.canShare && navigator.share && window.innerWidth <= 600) {
+    try {
+      // 1) Baixa o PDF como Blob
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const file = new File(
+        [blob],
+        `${document.getElementById('titulo-principal').textContent || 'Processo'}.pdf`,
+        { type: 'application/pdf' }
+      );
+
+      // 2) Dispara o share sheet
+      await navigator.share({
+        files: [file],
+        title: document.getElementById('titulo-principal').textContent,
+      });
+    } catch (err) {
+      console.error('Erro ao compartilhar:', err);
+      // fallback tradicional
+      window.open(url, '_blank');
+    }
+  } else {
+    // Fallback: abre em nova aba (desktop ou navegadores sem share)
+    window.open(url, '_blank');
+  }
+}
+
+
+
+// Novo listener unificado para “Nova Receita”
+document.getElementById('btnAddRec').addEventListener('click', () => {
+  if (window.innerWidth <= 600) {
+    // Abrir modal-mobile em modo de adição
+    const modal = document.getElementById('modal-receita-mobile');
+    modal.removeAttribute('data-editing');
+    limparCamposMobile();       // limpa os campos
+    modal.style.display = 'flex';
+    setTimeout(() => document.getElementById('mob-produto').focus(), 100);
+  } else {
+    adicionaReceita();
+  }
+});
+
+// Novo listener para “Editar Receita”
+document.getElementById('btnEditRec').addEventListener('click', () => {
+  if (selectedRec === null) {
+    return alert('Selecione uma linha para editar.');
+  }
+  if (window.innerWidth <= 600) {
+    // Abrir modal-mobile em modo de edição
+    const modal = document.getElementById('modal-receita-mobile');
+    modal.setAttribute('data-editing', 'true');
+    // Preenche campos com o item selecionado
+    const r = receitaData[selectedRec];
+    document.getElementById('mob-produto').value    = r.produto;
+    document.getElementById('mob-sequencia').value = r.sequencia;
+    document.getElementById('mob-preco').value     = r.preco;
+    document.getElementById('mob-quantidade').value= r.quantidade;
+    document.getElementById('mob-percent').value   = r.percent;
+    modal.style.display = 'flex';
+    setTimeout(() => document.getElementById('mob-produto').focus(), 100);
+  } else {
+    editaReceita();
+  }
+});
+
+function limparCamposMobile() {
+  document.getElementById('mob-produto').value = '';
+  document.getElementById('mob-sequencia').value = '';
+  document.getElementById('mob-preco').value = '';
+  document.getElementById('mob-quantidade').value = '';
+  document.getElementById('mob-percent').value = '%';
+}
+
+
+
+    function abrirReceita() {
+      const primeiroEncher = etapasData.find(et => et.tipo === 'Encher Máquina');
+      let relacao = '';
+      if (primeiroEncher) {
+        const partes = primeiroEncher.dados.resumo.split(',');
+        relacao = (partes[1]||'').trim();
+      }
+
+      atualizarTabelaReceita();
+   // +++ limpa os campos para nova entrada +++
+      document.getElementById('rec-produto'   ).value = '';
+      document.getElementById('rec-sequencia' ).value = '';
+      document.getElementById('rec-preco'     ).value = '';
+      document.getElementById('rec-quantidade').value = '';
+      document.getElementById('rec-percent'   ).value = '%';
+      document.getElementById('rec-rskg'      ).value = '';
+      selectedRec = null;
+            // esconde os botões laterais enquanto o modal de receita estiver aberto
+      document.getElementById('sideFab').style.display = 'none';
+      document.getElementById('modal-receita').style.display = 'flex';
+    }
+    function fecharReceita() {
+      document.getElementById('modal-receita').style.display = 'none';
+       // restaura visibilidade dos botões laterais
+      document.getElementById('sideFab').style.display = '';
+    }
+
+   // ── Funções de abrir/fechar e popular tabela de Insumos ──
+  // 1) leio carga e relação dos inputs que existem no HTML
+function abrirInsumos() {
+  const cargaMedia = parseFloat(document.getElementById('carga-input').value)      || 300;
+  const relacao    = parseFloat(document.getElementById('relacao1-input').value)   || 8;
+  // 2) volume = carga × relação
+  const vol = cargaMedia * relacao;
+  // 3) agora atualizo a tabela usando o novo 'vol'
+    document.getElementById('modal-insumos').style.display = 'flex';
+  atualizarTabelaInsumos();
+   }
+   function fecharInsumos() {
+     document.getElementById('modal-insumos').style.display = 'none';
+   }
+
+   function atualizarTabelaInsumos() {
+     const tbody = document.querySelector('#tabela-insumos tbody');
+     tbody.innerHTML = '';
+    // 1) preenche Vapor e Hora máquina
+    insumosData.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.produto}</td>
+        <td>${r.preco.toFixed(2)}</td>
+        <td>${r.quantidade.toFixed(2)}</td>
+        <td>${r.unidade}</td>
+        <td>${r.rskg.toFixed(3)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // 2) adiciona um pouco de espaço (opcional via CSS/margin)
+
+    // 3) preenche a tabela de Água (#tabela-agua)
+    //    Quantidade = 300 * relação de banho
+  // agora puxe a relação e a carga dos novos inputs:
+
+let consumo = 0;
+etapasData.forEach(et => {
+  if (et.tipo === 'Encher Máquina' || et.tipo === 'Transbordo') {
+    const m = et.dados.resumo.match(/1:(\d+)/);
+    if (m) consumo += parseInt(m[1], 10);
+  }
+});
+ // pega carga média
+ const carga = parseFloat(document.getElementById('carga-input').value) || 300;
+ // quantidade de água = soma dos 1:x  × carga média
+ const aguaQtd = consumo * carga;
+
+    const tbodyAgua = document.querySelector('#tabela-agua tbody');
+    tbodyAgua.innerHTML = '';
+    const trAgua = document.createElement('tr');
+    trAgua.innerHTML = `
+      <td>Água</td>
+      <td>0.00</td>
+      <td>${aguaQtd.toFixed(2)}</td>
+      <td>Litros</td>
+   <td>${consumo}</td>
+    `;
+    tbodyAgua.appendChild(trAgua);
+ }
+
+
+
+
+
+function atualizarTabelaReceita() {
+  const tbody = document.querySelector('#tabela-receita tbody');
+  tbody.innerHTML = '';
+  receitaData.forEach((r, i) => {
+    // ── Novo: recalcula R$/kg para Vapor e Hora máquina ──
+    if (r.produto === 'Vapor' || r.produto === 'Hora máquina') {
+      r.rskg = parseFloat((r.preco * r.quantidade / 300).toFixed(3));
+    }
+    const quantidadeText = r.produto === 'Vapor'
+      ? r.quantidade.toFixed(2)
+      : r.quantidade;
+
+
+    const tr = document.createElement('tr');
+    tr.dataset.index = i;
+    tr.innerHTML = `
+      <td>${r.produto}</td>
+      <td>${r.sequencia}</td>
+      <td>${r.preco.toFixed(2)}</td>
+      <td>${quantidadeText}</td>
+      <td>${r.percent}</td>
+      <td>${r.rskg.toFixed(3)}</td>
+    `;
+    tr.addEventListener('click', () => {
+      // limpa seleção anterior
+      tbody.querySelectorAll('tr.selected')
+           .forEach(x => x.classList.remove('selected'));
+      // marca esta
+      tr.classList.add('selected');
+      selectedRec = i;
+      // preenche formulário
+      document.getElementById('rec-produto').value    = r.produto;
+      document.getElementById('rec-sequencia').value  = r.sequencia;
+      document.getElementById('rec-preco').value      = r.preco;
+      document.getElementById('rec-quantidade').value = r.quantidade;
+      document.getElementById('rec-percent').value    = r.percent;
+      document.getElementById('rec-rskg').value       = r.rskg;
+    });
+    tbody.appendChild(tr);
+  });
+  // atualiza total
+  const total = receitaData.reduce((sum, r) => sum + r.rskg, 0);
+  document.getElementById('custo-total').textContent = total.toFixed(2);
+}
+
+function sincronizarReceitaComServidor() {
+  fetch('/atualizar_receita', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(receitaData)
+  });
+}
+
+    function adicionaReceita() {
+      const preco      = parseFloat(document.getElementById('rec-preco').value)     || 0;
+      const quantidade = parseFloat(document.getElementById('rec-quantidade').value)|| 0;
+      const percent    = document.getElementById('rec-percent').value;
+      const rel        = getRelacaoBanho();
+      let rskg;
+      if (percent === '%') {
+        rskg = preco * quantidade / 100;
+      } else {
+    // agora pegamos a relação de banho DA TELA PRINCIPAL:
+    const relacaoBanho = parseFloat(
+      document.querySelector('input#relacao, input#relacao1-input').value
+    ) || 1;
+    // cálculo g/L com relação de banho:
+    rskg = preco * quantidade * relacaoBanho / 1000;
+      }
+      const novo = {
+        produto: document.getElementById('rec-produto').value,
+        sequencia: document.getElementById('rec-sequencia').value,
+        preco, quantidade, percent, rskg
+      };
+      receitaData.push(novo);
+      atualizarTabelaReceita();
+      sincronizarReceitaComServidor();  // << NOVO
+   // limpa os campos para a próxima entrada
+   document.getElementById('rec-produto'   ).value = '';
+   document.getElementById('rec-sequencia' ).value = '';
+   document.getElementById('rec-preco'     ).value = '';
+   document.getElementById('rec-quantidade').value = '';
+   document.getElementById('rec-percent'   ).value = '%';
+   document.getElementById('rec-rskg'      ).value = '';
+   document.getElementById('rec-produto'   ).focus();
+ 
+    }
+    function editaReceita() {
+      if (selectedRec === null) return alert('Selecione uma linha.');
+      const r = receitaData[selectedRec];
+      const preco      = parseFloat(document.getElementById('rec-preco').value)     || 0;
+      const quantidade = parseFloat(document.getElementById('rec-quantidade').value)|| 0;
+      const percent    = document.getElementById('rec-percent').value;
+      const rel        = getRelacaoBanho();
+      let rskg;
+      if (percent === '%') {
+        rskg = preco * quantidade / 100;
+      } else {
+        rskg = preco * quantidade * rel / 1000;
+      }
+      r.produto    = document.getElementById('rec-produto').value;
+      r.sequencia  = document.getElementById('rec-sequencia').value;
+      r.preco      = preco;
+      r.quantidade = quantidade;
+      r.percent    = percent;
+      r.rskg       = rskg;
+      atualizarTabelaReceita();
+      sincronizarReceitaComServidor();  // << NOVO
+    }
+     function excluiReceita() {
+       if (selectedRec === null) return alert('Selecione uma linha.');
+       receitaData.splice(selectedRec, 1);
+       selectedRec = null;
+       atualizarTabelaReceita();
+       sincronizarReceitaComServidor();  // << NOVO
+     }
+
+function atualizarTabelaEtapas() {
+  const tbody = document.querySelector('#tabela-etapas');
+  // limpa as linhas existentes
+  tbody.querySelectorAll('tr[data-index]').forEach(tr => tr.remove());
+
+  // reconstrói cada etapa
+  etapasData.forEach((et, i) => {
+    const tr = document.createElement('tr');
+    tr.dataset.index = i;
+    tr.innerHTML = `
+      <td>${et.tipo}</td>
+      <td>${et.dados.resumo}</td>
+      <td>${et.dados.tempo}</td>
+    `;
+    tr.addEventListener('click', selecionarLinha);
+    tbody.appendChild(tr);
+  });
+
+  // atualiza o tempo total visível na página
+  const totalMin = etapasData.reduce((sum, e) => sum + e.dados.tempo, 0);
+  const h = Math.floor(totalMin/60), m = totalMin % 60;
+  document.querySelector('p').textContent = `Tempo total: ${h}:${m.toString().padStart(2,'0')}`;
+}
+
+
+  </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js');
+  }
+
+function abrirReceitaMobile() {
+  document.getElementById('modal-receita-mobile').style.display = 'flex';
+}
+
+function fecharReceitaMobile() {
+  const modal = document.getElementById('modal-receita-mobile');
+  modal.style.display = 'none';
+  modal.removeAttribute('data-editing');
+}
+
+function salvarReceitaMobile() {
+  const produto    = document.getElementById('mob-produto').value.trim();
+  const sequencia  = document.getElementById('mob-sequencia').value.trim().toUpperCase();
+  const preco      = parseFloat(document.getElementById('mob-preco').value) || 0;
+  const quantidade = parseFloat(document.getElementById('mob-quantidade').value) || 0;
+  const percent    = document.getElementById('mob-percent').value;
+
+  if (!produto) {
+    alert('Informe o nome do produto.');
+    return;
+  }
+
+  // Calcula R$/kg
+  const relacaoBanho = parseFloat(document.getElementById('relacao1-input').value.trim()) || 1;
+  let rskg;
+  if (percent === '%') {
+    rskg = preco * quantidade / 100;
+  } else {
+    rskg = preco * quantidade * relacaoBanho / 1000;
+  }
+
+  const modal = document.getElementById('modal-receita-mobile');
+  const isEditing = modal.hasAttribute('data-editing');
+
+  if (isEditing) {
+    // Sobrescreve o item selecionado
+    const r = receitaData[selectedRec];
+    r.produto    = produto;
+    r.sequencia  = sequencia;
+    r.preco      = preco;
+    r.quantidade = quantidade;
+    r.percent    = percent;
+    r.rskg       = parseFloat(rskg.toFixed(3));
+  } else {
+    // Insere novo
+    receitaData.push({
+      produto, sequencia, preco,
+      quantidade, percent,
+      rskg: parseFloat(rskg.toFixed(3))
+    });
+  }
+
+  // Atualiza UI e servidor
+  atualizarTabelaReceita();
+  sincronizarReceitaComServidor();
+
+  // Fecha modal
+  modal.style.display = 'none';
+  modal.removeAttribute('data-editing');
+  selectedRec = null;
+}
+
+
+
+
+
+</script>
+<!-- Modal Receita Mobile -->
+<div id="modal-receita-mobile" style="display:none; position:fixed; top:0; left:0;
+     width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:9999;">
+  <div style="background:white; padding:16px; border-radius:8px; width:95%; max-width:400px;">
+    <h3 style="margin-top:0;">Nova Receita</h3>
+    <label>Produto:</label>
+    <input id="mob-produto" type="text" style="width:100%; margin-bottom:8px;">
+    <label>Sequência:</label>
+    <input id="mob-sequencia" type="text" maxlength="2" style="width:100%; margin-bottom:8px;">
+    <label>Preço (R$):</label>
+    <input id="mob-preco" type="number" inputmode="decimal" style="width:100%; margin-bottom:8px;">
+    <label>Quantidade:</label>
+    <input id="mob-quantidade" type="number" inputmode="decimal" style="width:100%; margin-bottom:8px;">
+    <label>Unidade:</label>
+    <select id="mob-percent" style="width:100%; margin-bottom:12px;">
+      <option value="%">%</option>
+      <option value="g/L">g/L</option>
+    </select>
+
+    <div style="text-align:right;">
+      <button onclick="salvarReceitaMobile()">Salvar</button>
+      <button onclick="fecharReceitaMobile()" style="margin-left:8px;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

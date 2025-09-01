@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login – Gráficos de Tingimento</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      body {
+        /* fundo com capa.jpg via caminho absoluto */
+        background: url('/static/capa.jpg') no-repeat top center fixed;
+        background-size: contain;
+        min-height: 100vh;
+        position: relative;
+        font-family: Tahoma, sans-serif;
+      }
+
+      /* Caixa de login */
+      .overlay {
+        position: absolute;
+        top: 65%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.85);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 320px;
+        text-align: center;
+      }
+
+      /* Desktop: empurra mais para baixo */
+      @media (min-width: 768px) {
+        .overlay {
+          top: 85%;
+        }
+      }
+
+      /* Mobile: ajusta background e caixa */
+      @media (max-width: 767px) {
+        body {
+          background-size: 100% auto;
+          min-height: 100vh;
+        }
+        .overlay {
+          top: 70%;
+        }
+      }
+
+      h2 {
+        margin: 0 0 1rem;
+        font-size: 1.5rem;
+        color: #222;
+      }
+      .error {
+        color: #c00;
+        margin-bottom: 1rem;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      input[type="password"] {
+        padding: 8px;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 10px;
+        background: #4783d7;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #3568a3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay">
+      <h2>Acesso Restrito</h2>
+      {% with msgs = get_flashed_messages(category_filter=['error']) %}
+        {% if msgs %}
+          <div class="error">{{ msgs[0] }}</div>
+        {% endif %}
+      {% endwith %}
+      <form method="post" action="{{ url_for('login') }}">
+        <input
+          type="password"
+          name="password"
+          placeholder="Senha"
+          autofocus
+          required
+        />
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
+  </body>
+</html>

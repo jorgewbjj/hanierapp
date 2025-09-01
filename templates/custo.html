@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cálculo de Custo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 30px;
+    }
+    .container {
+      background: #fff;
+      max-width: 1100px;
+      margin: 0 auto;
+      border-radius: 8px;
+      padding: 24px 28px 36px 28px;
+      box-shadow: 0 0 14px #0002;
+    }
+    h2 { font-size: 1.8em; margin: 0 0 16px 0; }
+    h3 { margin: 18px 0 8px 0; }
+    label { font-size: 1.13em; }
+    input[type="number"] { font-size: 1em; padding: 3px 6px; width:80px;}
+    button { padding: 7px 15px; font-size: 1em; border: 1px solid #aaa; border-radius: 5px; background: #eaeaea; cursor: pointer; }
+    button:hover { background: #dce6f2; }
+    #btnAjustarSequencia { float: right; margin-top: 2px; }
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }     table { width: 100%; border-collapse: collapse; background: white; margin-top: 12px; min-width: 600px; }
+    th, td { border: 1px solid #bbb; padding: 8px; text-align: center; }
+    th { background: #dce6f2; font-size: 1.09em; }
+    tfoot td { background: #f4f8fc; font-weight: bold; }
+    .form-row input, .form-row select { margin: 0 4px; }
+    .selected { background: #fff6c3; }
+    .campo-relacao { margin-left:22px;}
+    /* Modal mobile */
+    #modal-adicionar {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.24);
+      align-items: center; justify-content: center;
+    }
+    #modal-adicionar .modal-content {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px 20px 20px 20px;
+      width: 95vw;
+      max-width: 380px;
+      box-shadow: 0 4px 24px #0002;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #modal-adicionar label {
+      font-size: 1em;
+      margin-bottom: 2px;
+    }
+    #modal-adicionar input, #modal-adicionar select {
+      font-size: 1.09em;
+      padding: 7px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    #modal-adicionar .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      justify-content: flex-end;
+    }
+    @media (max-width:700px) {
+      .container { padding: 8px; }
+      th, td { padding: 5px 2px; font-size: 0.95em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Cálculo de Custo do Processo</h2>
+<style>
+  .campos-topo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 15px;
+  }
+  .grupo-campo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 0;
+  }
+  .grupo-campo-botoes {
+    margin-top: 6px;
+    display: flex;
+    gap: 7px;
+  }
+  @media (max-width:700px) {
+    .campos-topo { gap: 2px; }
+    .grupo-campo label, .grupo-campo input { font-size: 1em; }
+  }
+</style>
+
+<div class="campos-topo">
+  <div class="grupo-campo">
+    <label for="horas">Tempo do Processo:</label>
+    <input id="horas" type="number" value="0" min="0" max="99" style="width:45px;">
+    h
+    <input id="minutos" type="number" value="0" min="0" max="59" style="width:45px;">
+    min
+  </div>
+  <div class="grupo-campo">
+    <label for="relacao-banho">Relação de Banho 1:</label>
+    <input id="relacao-banho" type="number" value="8" min="1" step="any" style="width:40px;">
+  </div>
+  <div class="grupo-campo-botoes">
+    <button id="btnAtualizarTempo">Atualizar</button>
+    <button id="btnImprimirCusto" style="margin-left:16px;">Imprimir</button>
+  </div>
+</div>
+
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3>Receita</h3>
+      <button id="btnAjustarSequencia">Ajustar Sequência</button>
+    </div>
+        <div class="table-responsive">
+      <table id="tabela-receita-custo">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Sequência</th>
+          <th>Preço (R$)</th>
+          <th>Quantidade</th>
+          <th>Unidade</th>
+          <th>R$/kg</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- preenchido via JS -->
+      </tbody>
+      <tfoot>
+        <tr class="form-row">
+          <td><input id="rec-produto"  placeholder="Produto"></td>
+          <td><input id="rec-sequencia" placeholder="Sequência" maxlength="2" style="width:44px;"></td>
+          <td><input id="rec-preco" type="number" placeholder="Preço (R$)" step="0.01" min="0"></td>
+          <td><input id="rec-quantidade" type="number" placeholder="Quantidade" step="0.01" min="0"></td>
+          <td>
+            <select id="rec-percent">
+              <option value="%">%</option>
+              <option value="g/L">g/L</option>
+            </select>
+          </td>
+          <td><input id="rec-rskg" type="number" placeholder="R$/kg" step="0.001" min="0"></td>
+        </tr>
+        <tr>
+          <td colspan="4"></td>
+          <td style="text-align:right;">Custo total:</td>
+          <td style="text-align:center;" id="custo-total-custo">R$ 0.00</td>
+        </tr>
+      </tfoot>
+      </table>
+    </div>
+    <div style="margin-top:9px;">
+      <button id="btnAddRec">Adicionar</button>
+      <button id="btnEditRec">Editar</button>
+      <button id="btnDelRec">Excluir</button>
+      <button id="btnLimparRec" style="background:#fae1e1; color:#c00;">Limpar</button>
+    </div>
+  </div>
+
+  <!-- Modal mobile para adicionar produto -->
+  <div id="modal-adicionar">
+    <div class="modal-content">
+      <label for="modal-produto">Produto</label>
+      <input id="modal-produto" placeholder="Nome do produto" autocomplete="off">
+
+      <label for="modal-sequencia">Sequência</label>
+      <input id="modal-sequencia" maxlength="2" placeholder="Sequência" autocomplete="off">
+
+      <label for="modal-preco">Preço (R$)</label>
+      <input id="modal-preco" type="number" placeholder="Preço" step="0.01" min="0">
+
+      <label for="modal-quantidade">Quantidade</label>
+      <input id="modal-quantidade" type="number" placeholder="Quantidade" step="0.01" min="0">
+
+      <label for="modal-percent">Unidade</label>
+      <select id="modal-percent">
+        <option value="%">%</option>
+        <option value="g/L">g/L</option>
+      </select>
+
+      <div class="modal-actions">
+        <button id="btnSalvarModal" style="background:#dce6f2;">Salvar</button>
+        <button id="btnCancelarModal" style="background:#eee;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Se você estiver usando Flask, ajuste receitaData e tempo conforme necessário.
+    let receitaData = [];
+    let selectedRec = null;
+    let tempoProcesso = 0;
+    let relacaoBanho = 8;
+
+    document.getElementById('horas').value = Math.floor(tempoProcesso/60);
+    document.getElementById('minutos').value = tempoProcesso % 60;
+    document.getElementById('relacao-banho').value = relacaoBanho;
+
+    function getTempoProcessoMinutos() {
+      const h = parseInt(document.getElementById('horas').value) || 0;
+      const m = parseInt(document.getElementById('minutos').value) || 0;
+      return (h*60) + m;
+    }
+    function getRelacaoBanho() {
+      return parseFloat(document.getElementById('relacao-banho').value) || 8;
+    }
+
+    function atualizarTabelaReceita() {
+      relacaoBanho = getRelacaoBanho();
+      const tbody = document.querySelector('#tabela-receita-custo tbody');
+      tbody.innerHTML = '';
+      receitaData.forEach((r, i) => {
+        // ---- Cálculo R$/kg corrigido ----
+        let rskg = 0;
+        if (r.percent === '%') {
+          rskg = Number(r.preco) * Number(r.quantidade) / 100;
+        } else {
+          rskg = Number(r.preco) * Number(r.quantidade) * Number(relacaoBanho) / 1000;
+        }
+        r.rskg = parseFloat((rskg||0).toFixed(3));
+        const tr = document.createElement('tr');
+        tr.dataset.index = i;
+        tr.innerHTML = `
+          <td>${r.produto}</td>
+          <td>${r.sequencia}</td>
+          <td>${Number(r.preco).toFixed(2)}</td>
+          <td>${r.quantidade}</td>
+          <td>${r.percent}</td>
+          <td>${r.rskg.toFixed(3)}</td>
+        `;
+        tr.onclick = () => {
+          tbody.querySelectorAll('tr.selected').forEach(x => x.classList.remove('selected'));
+          tr.classList.add('selected');
+          selectedRec = i;
+          document.getElementById('rec-produto').value    = r.produto;
+          document.getElementById('rec-sequencia').value  = r.sequencia;
+          document.getElementById('rec-preco').value      = r.preco;
+          document.getElementById('rec-quantidade').value = r.quantidade;
+          document.getElementById('rec-percent').value    = r.percent;
+          document.getElementById('rec-rskg').value       = r.rskg;
+        };
+        tbody.appendChild(tr);
+      });
+      // total
+      const total = receitaData.reduce((sum, r) => sum + (r.rskg||0), 0);
+      document.getElementById('custo-total-custo').textContent = 'R$ ' + total.toFixed(2);
+    }
+
+    document.getElementById('rec-percent').addEventListener('change', atualizarTabelaReceita);
+    document.getElementById('relacao-banho').addEventListener('input', atualizarTabelaReceita);
+
+    function isMobile() {
+      return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    document.getElementById('btnAddRec').onclick = () => {
+      if (isMobile()) {
+        // Abrir modal visual mobile
+        document.getElementById('modal-produto').value    = '';
+        document.getElementById('modal-sequencia').value  = '';
+        document.getElementById('modal-preco').value      = '';
+        document.getElementById('modal-quantidade').value = '';
+        document.getElementById('modal-percent').value    = '%';
+        document.getElementById('modal-adicionar').style.display = 'flex';
+        setTimeout(() => { document.getElementById('modal-produto').focus(); }, 100);
+      } else {
+        // Desktop: fluxo normal
+        const preco      = parseFloat(document.getElementById('rec-preco').value)||0;
+        const quantidade = parseFloat(document.getElementById('rec-quantidade').value)||0;
+        const percent    = document.getElementById('rec-percent').value;
+        let rskg;
+        if (percent === '%') {
+          rskg = preco * quantidade / 100;
+        } else {
+          rskg = preco * quantidade * getRelacaoBanho() / 1000;
+        }
+        const novo = {
+          produto:    document.getElementById('rec-produto').value,
+          sequencia:  document.getElementById('rec-sequencia').value,
+          preco,
+          quantidade,
+          percent,
+          rskg: parseFloat((rskg||0).toFixed(3))
+        };
+        receitaData.push(novo);
+        atualizarTabelaReceita();
+        selectedRec = null;
+        // Limpa inputs
+        document.getElementById('rec-produto').value    = '';
+        document.getElementById('rec-sequencia').value  = '';
+        document.getElementById('rec-preco').value      = '';
+        document.getElementById('rec-quantidade').value = '';
+        document.getElementById('rec-percent').value    = '%';
+        document.getElementById('rec-rskg').value       = '';
+      }
+    };
+
+    // Modal mobile: salvar produto
+document.getElementById('btnSalvarModal').onclick = function() {
+  const produto    = document.getElementById('modal-produto').value.trim();
+  const sequencia  = document.getElementById('modal-sequencia').value.trim();
+  const preco      = parseFloat(document.getElementById('modal-preco').value)||0;
+  const quantidade = parseFloat(document.getElementById('modal-quantidade').value)||0;
+  const percent    = document.getElementById('modal-percent').value;
+  let rskg;
+  if (percent === '%') {
+    rskg = preco * quantidade / 100;
+  } else {
+    rskg = preco * quantidade * getRelacaoBanho() / 1000;
+  }
+  if (!produto) {
+    alert('Informe o nome do produto.'); return;
+  }
+  // Aqui vem a mágica:
+  const modal = document.getElementById('modal-adicionar');
+  if (modal.getAttribute('data-editando') === 'true') {
+    // EDITANDO: sobrescreve a linha selecionada!
+    if (selectedRec === null) { alert("Erro ao editar."); return; }
+    const r = receitaData[selectedRec];
+    r.produto    = produto;
+    r.sequencia  = sequencia;
+    r.preco      = preco;
+    r.quantidade = quantidade;
+    r.percent    = percent;
+    r.rskg       = parseFloat((rskg||0).toFixed(3));
+    selectedRec = null;
+    modal.removeAttribute('data-editando');
+  } else {
+    // ADICIONANDO: fluxo normal
+    receitaData.push({
+      produto,
+      sequencia,
+      preco,
+      quantidade,
+      percent,
+      rskg: parseFloat((rskg||0).toFixed(3))
+    });
+  }
+  atualizarTabelaReceita();
+  document.getElementById('modal-adicionar').style.display = 'none';
+};
+
+
+document.getElementById('btnCancelarModal').onclick = function() {
+  document.getElementById('modal-adicionar').style.display = 'none';
+  document.getElementById('modal-adicionar').removeAttribute('data-editando');
+};
+document.getElementById('modal-adicionar').onclick = function(e) {
+  if (e.target === this) {
+    this.style.display = 'none';
+    this.removeAttribute('data-editando');
+  }
+};
+
+
+// Novo: para editar no mobile
+document.getElementById('btnEditRec').onclick = () => {
+  if (selectedRec === null) return alert('Selecione uma linha.');
+  if (isMobile()) {
+    // Preenche o modal com os dados da linha selecionada
+    const r = receitaData[selectedRec];
+    document.getElementById('modal-produto').value    = r.produto;
+    document.getElementById('modal-sequencia').value  = r.sequencia;
+    document.getElementById('modal-preco').value      = r.preco;
+    document.getElementById('modal-quantidade').value = r.quantidade;
+    document.getElementById('modal-percent').value    = r.percent;
+    // Marca que estamos editando, não adicionando
+    document.getElementById('modal-adicionar').setAttribute('data-editando', 'true');
+    document.getElementById('modal-adicionar').style.display = 'flex';
+  } else {
+    // Desktop: fluxo normal (deixe como já estava)
+    const preco      = parseFloat(document.getElementById('rec-preco').value)||0;
+    const quantidade = parseFloat(document.getElementById('rec-quantidade').value)||0;
+    const percent    = document.getElementById('rec-percent').value;
+    let rskg;
+    if (percent === '%') {
+      rskg = preco * quantidade / 100;
+    } else {
+      rskg = preco * quantidade * getRelacaoBanho() / 1000;
+    }
+    const r = receitaData[selectedRec];
+    r.produto    = document.getElementById('rec-produto').value;
+    r.sequencia  = document.getElementById('rec-sequencia').value;
+    r.preco      = preco;
+    r.quantidade = quantidade;
+    r.percent    = percent;
+    r.rskg       = parseFloat((rskg||0).toFixed(3));
+    atualizarTabelaReceita();
+    selectedRec = null;
+    // Limpa inputs
+    document.getElementById('rec-produto').value    = '';
+    document.getElementById('rec-sequencia').value  = '';
+    document.getElementById('rec-preco').value      = '';
+    document.getElementById('rec-quantidade').value = '';
+    document.getElementById('rec-percent').value    = '%';
+    document.getElementById('rec-rskg').value       = '';
+  }
+};
+
+    document.getElementById('btnDelRec').onclick = () => {
+      if (selectedRec === null) return alert('Selecione uma linha.');
+      receitaData.splice(selectedRec, 1);
+      selectedRec = null;
+      atualizarTabelaReceita();
+      // Limpa inputs
+      document.getElementById('rec-produto').value    = '';
+      document.getElementById('rec-sequencia').value  = '';
+      document.getElementById('rec-preco').value      = '';
+      document.getElementById('rec-quantidade').value = '';
+      document.getElementById('rec-percent').value    = '%';
+      document.getElementById('rec-rskg').value       = '';
+    };
+
+    document.getElementById('btnLimparRec').onclick = () => {
+      if (!confirm("Deseja remover todos os itens da receita?")) return;
+      receitaData = [];
+      selectedRec = null;
+      atualizarTabelaReceita();
+      // Limpa inputs
+      document.getElementById('rec-produto').value    = '';
+      document.getElementById('rec-sequencia').value  = '';
+      document.getElementById('rec-preco').value      = '';
+      document.getElementById('rec-quantidade').value = '';
+      document.getElementById('rec-percent').value    = '%';
+      document.getElementById('rec-rskg').value       = '';
+    };
+
+    document.getElementById('btnAjustarSequencia').onclick = () => {
+      receitaData.sort((a, b) => {
+        const sa = (a.sequencia||'').toUpperCase();
+        const sb = (b.sequencia||'').toUpperCase();
+        return sa.localeCompare(sb);
+      });
+      atualizarTabelaReceita();
+    };
+
+    document.getElementById('btnAtualizarTempo').onclick = () => {
+      tempoProcesso = getTempoProcessoMinutos();
+      relacaoBanho = getRelacaoBanho();
+      alert('Tempo e relação de banho atualizados!');
+    };
+
+    document.getElementById('btnImprimirCusto').onclick = () => {
+      fetch('/atualizar_receita_custo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receita: receitaData,
+          tempo: getTempoProcessoMinutos(),
+          relacao_banho: getRelacaoBanho()
+        })
+      }).then(() => {
+        // Detecta se é mobile
+        if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          window.location.href = '/imprimir_pdf_custo'; // Abre na mesma aba (mobile)
+        } else {
+          window.open('/imprimir_pdf_custo', '_blank'); // Nova aba (desktop)
+        }
+      });
+    };
+
+    atualizarTabelaReceita();
+  </script>
+</body>
+</html>

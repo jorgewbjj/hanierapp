@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Arquivos – Processos de Tingimento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Tahoma, sans-serif; background:#f2f4f7; margin:0; padding:20px; }
+    .card { background:#fff; max-width:960px; margin:0 auto; padding:16px 20px; border-radius:10px; box-shadow:0 2px 12px #0001;}
+    h1 { margin:0 0 12px 0; font-size:20px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    label { font-size:14px; }
+    select, input[type="text"] { padding:6px 8px; font-size:14px; }
+    button { padding:8px 12px; font-size:14px; cursor:pointer; }
+    .muted { color:#667085; font-size:12px; }
+    table { width:100%; border-collapse: collapse; margin-top:12px; background:#fff; }
+    th, td { border:1px solid #e5e7eb; padding:8px; text-align:left; font-size:14px; }
+    th { background:#f8fafc; }
+    .right { text-align:right; }
+    .actions button { margin-right:6px; }
+    @media (max-width: 640px) {
+      .row { flex-direction:column; align-items:stretch; }
+      .actions { display:flex; gap:8px; }
+      table { font-size:13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Arquivos</h1>
+    <div class="row">
+      <div>
+        <label>Cliente (pasta):</label><br>
+        <select id="selCliente">
+          {% if clientes|length == 0 %}
+            <option value="">(Nenhum cliente)</option>
+          {% else %}
+            {% for c in clientes %}
+              <option value="{{ c.id }}">{{ c.nome }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+      <div>
+        <button id="btnNovoCliente">+ Nova pasta</button>
+      </div>
+      <div id="wrapNovo" style="display:none;">
+        <input id="inpNovoNome" type="text" placeholder="Nome do cliente/pasta">
+        <button id="btnCriarCliente">Criar</button>
+        <button id="btnCancelarNovo" class="muted">Cancelar</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div>
+        <input id="fileInput" type="file" multiple accept=".json,.pdf">
+        <div class="muted">Tipos aceitos: .json, .pdf</div>
+      </div>
+      <div>
+        <button id="btnUpload">Upload</button>
+      </div>
+      <div style="margin-left:auto;">
+        <a href="/menu"><button>⬅ Menu</button></a>
+      </div>
+    </div>
+
+    <div id="status" class="muted" style="margin-top:8px;"></div>
+
+    <table id="tabArquivos">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>MIME</th>
+          <th class="right">Tamanho</th>
+          <th>Data</th>
+          <th class="right">Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+const selCliente = document.getElementById('selCliente');
+const btnNovoCliente = document.getElementById('btnNovoCliente');
+const wrapNovo = document.getElementById('wrapNovo');
+const inpNovoNome = document.getElementById('inpNovoNome');
+const btnCriarCliente = document.getElementById('btnCriarCliente');
+const btnCancelarNovo = document.getElementById('btnCancelarNovo');
+
+const fileInput = document.getElementById('fileInput');
+const btnUpload = document.getElementById('btnUpload');
+const tabBody = document.querySelector('#tabArquivos tbody');
+const statusEl = document.getElementById('status');
+
+function fmtBytes(n) {
+  if (!n && n !== 0) return '';
+  const k = 1024, sizes = ['B','KB','MB','GB'];
+  let i = Math.floor(Math.log(n)/Math.log(k));
+  i = Math.min(i, sizes.length-1);
+  return (n/Math.pow(k,i)).toFixed(1) + ' ' + sizes[i];
+}
+
+async function carregarClientes() {
+  const resp = await fetch('/api/clientes');
+  const lista = await resp.json();
+  selCliente.innerHTML = '';
+  if (!Array.isArray(lista) || lista.length === 0) {
+    selCliente.innerHTML = '<option value="">(Nenhum cliente)</option>';
+    return;
+  }
+  selCliente.innerHTML = lista.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+async function carregarArquivos() {
+  const cid = selCliente.value;
+  tabBody.innerHTML = '';
+  if (!cid) return;
+  const resp = await fetch(`/api/arquivos?cliente_id=${cid}`);
+  const j = await resp.json();
+  if (!j.success) {
+    statusEl.textContent = j.error || 'Erro ao listar arquivos';
+    return;
+  }
+  statusEl.textContent = `${j.arquivos.length} arquivo(s)`;
+  j.arquivos.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${a.nome}</td>
+      <td>${a.mimetype}</td>
+      <td class="right">${fmtBytes(a.tamanho)}</td>
+      <td>${new Date(a.created_at).toLocaleString()}</td>
+      <td class="right actions">
+        <a href="/download/${a.id}"><button>Baixar</button></a>
+        <button data-del="${a.id}">Excluir</button>
+      </td>
+    `;
+    tabBody.appendChild(tr);
+  });
+}
+
+selCliente.addEventListener('change', carregarArquivos);
+
+btnNovoCliente.addEventListener('click', () => {
+  wrapNovo.style.display = 'block';
+  inpNovoNome.value = '';
+  inpNovoNome.focus();
+});
+btnCancelarNovo.addEventListener('click', () => {
+  wrapNovo.style.display = 'none';
+});
+btnCriarCliente.addEventListener('click', async () => {
+  const nome = inpNovoNome.value.trim();
+  if (!nome) return alert('Informe o nome do cliente/pasta.');
+  const resp = await fetch('/api/clientes', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ nome })
+  });
+  const j = await resp.json();
+  if (!j.success) return alert(j.error || 'Falha ao criar');
+  wrapNovo.style.display = 'none';
+  await carregarClientes();
+  selCliente.value = j.id;
+  carregarArquivos();
+});
+
+btnUpload.addEventListener('click', async () => {
+  const cid = selCliente.value;
+  if (!cid) return alert('Selecione um cliente/pasta.');
+  if (!fileInput.files.length) return alert('Selecione ao menos um arquivo (.json ou .pdf).');
+
+  const fd = new FormData();
+  fd.append('cliente_id', cid);
+  Array.from(fileInput.files).forEach(f => fd.append('files', f));
+
+  btnUpload.disabled = true;
+  statusEl.textContent = 'Enviando...';
+  try {
+    const resp = await fetch('/api/upload', { method: 'POST', body: fd });
+    const j = await resp.json();
+    if (!j.success) throw new Error(j.error || 'Falha no upload');
+    statusEl.textContent = `Upload OK (${j.count})`;
+    fileInput.value = '';
+    await carregarArquivos();
+  } catch (e) {
+    statusEl.textContent = e.message || 'Erro no upload';
+    alert(statusEl.textContent);
+  } finally {
+    btnUpload.disabled = false;
+  }
+});
+
+tabBody.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-del]');
+  if (!btn) return;
+  const id = btn.getAttribute('data-del');
+  if (!confirm('Excluir este arquivo?')) return;
+  const resp = await fetch(`/api/arquivo/${id}`, { method: 'DELETE' });
+  const j = await resp.json();
+  if (!j.success) return alert(j.error || 'Falha ao excluir');
+  carregarArquivos();
+});
+
+// boot
+carregarClientes().then(carregarArquivos);
+</script>
+</body>
+</html>

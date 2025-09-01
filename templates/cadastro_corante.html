@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Cadastro de Corante</title>
+    <style>
+      body {
+        font-family: Tahoma, sans-serif;
+        padding: 1rem;
+      }
+      h2 {
+        margin-top: 0;
+      }
+
+      /* Formulário */
+      form {
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+        margin-bottom: 1.5rem;
+      }
+      label {
+        margin-bottom: .5rem;
+      }
+      input, select {
+        padding: .4rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button[type="submit"] {
+        padding: .6rem;
+        background: #4783d7;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button[type="submit"]:hover {
+        background: #3568a3;
+      }
+      .flash {
+        color: green;
+        margin-bottom: 1rem;
+      }
+
+      /* Lista de corantes */
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      li {
+        /* menos espaço entre itens */
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .2rem 0;
+        border-bottom: 1px solid #eee;
+      }
+      li:last-child {
+        border-bottom: none;
+      }
+
+      /* ações logo após o nome */
+      .actions {
+        display: flex;
+        gap: .3rem;
+        margin-left: .3rem; /* pequena separação do nome */
+      }
+      .actions button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        padding: 0;
+      }
+      .actions button:hover {
+        opacity: 0.7;
+       /* cabeçalho com seta de volta */
+       .header {
+         display: flex;
+         align-items: center;
+         gap: 1rem;
+         margin-bottom: 1rem;
+       }
+       .back-link {
+         text-decoration: none;
+         font-size: 1.2rem;
+         color: #4783d7;
+       }
+       .back-link:hover {
+         opacity: 0.8;
+       }
+    </style>
+  </head>
+  <body>
+         <div class="header">
+       <a href="{{ url_for('receita_inteligente_view') }}" class="back-link" title="Voltar">←</a>
+       <h2 id="form-title">Adicionar Novo Corante</h2>
+     </div>
+
+    {% with msgs = get_flashed_messages(category_filter=['success','error']) %}
+      {% for m in msgs %}
+        <div class="flash">{{ m }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="post" id="corante-form">
+      <input type="hidden" name="id" id="corante-id">
+
+      <label>
+        Nome do Corante:<br/>
+        <input type="text" name="nome" id="corante-nome" required>
+      </label>
+      <label>
+        Fornecedor:<br/>
+        <input type="text" name="fornecedor" id="corante-fornecedor">
+      </label>
+      <label>
+        Color Index:<br/>
+        <input type="text" name="color_index" id="corante-ci">
+      </label>
+      <label>
+        Tamanho da Molécula:<br/>
+        <select name="tamanho_molecula" id="corante-tam">
+          <option value="">(não informado)</option>
+          <option value="Pequena">Pequena</option>
+          <option value="Média">Média</option>
+          <option value="Grande">Grande</option>
+          <option value="Super Grande">Super Grande</option>
+        </select>
+      </label>
+
+      <button type="submit">Salvar Corante</button>
+    </form>
+
+    <h2>Corantes Cadastrados</h2>
+    {% if corantes %}
+      <ul>
+        {% for c in corantes %}
+        <li data-id="{{ c.id }}">
+          <strong>{{ c.nome }}</strong>
+          <span>
+            {% if c.fornecedor %}— {{ c.fornecedor }}{% endif %},
+            CI: {{ c.color_index or '–' }},
+            Tam: {{ c.tamanho_molecula or '–' }}
+          </span>
+          <div class="actions">
+            <button type="button" class="btn-edit" title="Editar">✏️</button>
+            <form method="post"
+                  action="{{ url_for('excluir_corante', cid=c.id) }}"
+                  onsubmit="return confirm('Tem certeza que deseja excluir este corante?');"
+                  style="display:inline;">
+              <button type="submit" title="Excluir">✖️</button>
+            </form>
+          </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>(Nenhum corante cadastrado.)</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('receita_inteligente_view') }}">← Voltar para Receita Inteligente</a></p>
+
+    <script>
+      // edição inline
+      document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.onclick = e => {
+          const li = e.target.closest('li[data-id]');
+          const id  = li.dataset.id;
+          const nome = li.querySelector('strong').textContent.trim();
+          const details = li.querySelector('span').textContent;
+          // extrai fornecedor, CI e tamanho
+          const parts = details.split(',');
+          const fornecedor = parts[0].replace('—','').trim();
+          const ci = parts[1].replace('CI:','').trim();
+          const tam = parts[2].replace('Tam:','').trim();
+
+          document.getElementById('form-title').textContent = 'Editar Corante';
+          document.getElementById('corante-id').value = id;
+          document.getElementById('corante-nome').value = nome;
+          document.getElementById('corante-fornecedor').value = fornecedor;
+          document.getElementById('corante-ci').value = ci;
+          document.getElementById('corante-tam').value = tam;
+          document.getElementById('corante-form')
+                  .scrollIntoView({ behavior: 'smooth' });
+        };
+      });
+
+      // ajusta título se estiver em edição
+      window.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('corante-id').value) {
+          document.getElementById('form-title').textContent = 'Editar Corante';
+        }
+      });
+    </script>
+  </body>
+</html>

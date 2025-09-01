@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Cadastro de Fibra</title>
+    <style>
+      body {
+        font-family: Tahoma, sans-serif;
+        padding: 1rem;
+      }
+      h2 {
+        margin-top: 0;
+      }
+
+      /* Formulário */
+      form {
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+        margin-bottom: 1.5rem;
+      }
+      label {
+        margin-bottom: .5rem;
+      }
+      select,
+      input {
+        padding: .4rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button[type="submit"] {
+        padding: .6rem;
+        background: #4783d7;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button[type="submit"]:hover {
+        background: #3568a3;
+      }
+      .flash {
+        color: green;
+        margin-bottom: 1rem;
+      }
+
+      /* Lista de fibras */
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      li {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .2rem 0;
+        border-bottom: 1px solid #eee;
+      }
+      li:last-child {
+        border-bottom: none;
+      }
+
+      /* Botões de ação ao lado do PUE */
+      .actions {
+        display: flex;
+        gap: .3rem;
+      }
+      .actions button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        padding: 0;
+      }
+      .actions button:hover {
+        opacity: 0.7;
+       /* cabeçalho com seta de volta */
+       .header {
+         display: flex;
+         align-items: center;
+         gap: 1rem;
+         margin-bottom: 1rem;
+       }
+       .back-link {
+         text-decoration: none;
+         font-size: 1.2rem;
+         color: #4783d7;
+       }
+       .back-link:hover {
+         opacity: 0.8;
+       }
+      
+    </style>
+  </head>
+  <body>
+         <div class="header">
+       <a href="{{ url_for('receita_inteligente_view') }}"
+          class="back-link" title="Voltar">←</a>
+       <h2 id="form-title">Adicionar Novo Tipo de Fibra</h2>
+     </div>
+
+    {% with msgs = get_flashed_messages(category_filter=['success','error']) %}
+      {% for m in msgs %}
+        <div class="flash">{{ m }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="post" id="fibra-form">
+      <input type="hidden" name="id" id="fibra-id">
+
+      <label>
+        Tipo de Fibra:<br/>
+        <select name="tipo" id="fibra-tipo" required>
+          <option value="">Selecione...</option>
+          <option value="PES">PES</option>
+          <option value="CO">CO</option>
+          <option value="CV">CV</option>
+          <option value="PA">PA</option>
+        </select>
+      </label>
+
+      <label>
+        Nome da Fibra:<br/>
+        <input type="text" name="nome" id="fibra-nome" required>
+      </label>
+
+      <label>
+        % da Fibra (<span id="labelPercFib">% PES</span>):<br/>
+        <input
+          type="number"
+          step="0.1"
+          name="perc_fibra"
+          id="fibra-perc"
+          required
+        />
+      </label>
+
+      <label>
+        % Elastano (PUE):<br/>
+        <input
+          type="number"
+          step="0.1"
+          name="perc_elastano"
+          id="fibra-pue"
+          required
+        />
+      </label>
+
+      <button type="submit">Salvar Fibra</button>
+    </form>
+
+    <h2>Fibras Cadastradas</h2>
+    {% if fibras %}
+      <ul>
+        {% for f in fibras %}
+          <li data-id="{{ f.id }}">
+            <strong>{{ f.tipo }} – {{ f.nome }}</strong>
+            <span>
+              {{ f.perc_fibra }}% {{ f.tipo }},
+              {{ f.perc_elastano }}% PUE
+            </span>
+            <div class="actions">
+              <button
+                type="button"
+                class="btn-edit"
+                title="Editar"
+              >✏️</button>
+              <form
+                method="post"
+                action="{{ url_for('excluir_fibra', fid=f.id) }}"
+                onsubmit="return confirm('Tem certeza que deseja excluir esta fibra?');"
+                style="display:inline;"
+              >
+                <button type="submit" title="Excluir">✖️</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>(Nenhuma fibra cadastrada.)</p>
+    {% endif %}
+
+    <p>
+      <a href="{{ url_for('receita_inteligente_view') }}">
+        ← Voltar para Receita Inteligente
+      </a>
+    </p>
+
+    <script>
+      // Atualiza label % da Fibra conforme tipo
+      const tipoSelect = document.getElementById('fibra-tipo');
+      const labelPerc = document.getElementById('labelPercFib');
+      function atualizarLabel() {
+        const tipo = tipoSelect.value || '';
+        labelPerc.textContent = tipo ? `% ${tipo}` : '% Fibra';
+      }
+      tipoSelect.addEventListener('change', atualizarLabel);
+      document.addEventListener('DOMContentLoaded', atualizarLabel);
+
+      // Edição inline de fibra
+      document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.onclick = e => {
+          const li = e.target.closest('li[data-id]');
+          const fid = li.dataset.id;
+          const header = li.querySelector('strong').textContent;
+          const details = li.querySelector('span').textContent;
+          const [tipo, nome] = header.split('–').map(s => s.trim());
+          const parts = details.split(',');
+          const perc = parseFloat(parts[0]);
+          const pue = parseFloat(parts[1]);
+
+          document.getElementById('form-title').textContent = 'Editar Fibra';
+          document.getElementById('fibra-id').value = fid;
+          document.getElementById('fibra-tipo').value = tipo;
+          document.getElementById('fibra-nome').value = nome;
+          document.getElementById('fibra-perc').value = perc;
+          document.getElementById('fibra-pue').value = pue;
+          document.getElementById('fibra-form').scrollIntoView({
+            behavior: 'smooth'
+          });
+        };
+      });
+
+      // Ajusta o título caso esteja em modo edição
+      window.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('fibra-id').value) {
+          document.getElementById('form-title').textContent =
+            'Editar Fibra';
+        }
+      });
+    </script>
+  </body>
+</html>

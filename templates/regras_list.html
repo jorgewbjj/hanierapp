@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Regras Salvas – Receita Inteligente</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; padding: 1rem; }
+    h2 { margin: 0 0 1rem 0; }
+    a { color: #4783d7; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #e6ebf2; text-align: left; vertical-align: top; }
+    thead th { background: #f6f8fb; }
+    .badge { padding: 2px 6px; border-radius: 6px; font-size: 12px; background: #eef2ff; }
+
+    /* Coluna Fibra mais larga para caber a composição completa */
+    .col-fibra { min-width: 420px; white-space: normal; }
+
+    /* Botões de ação */
+    .btn { display: inline-block; padding: 6px 10px; border-radius: 6px; color: #fff; text-decoration: none; }
+    .btn-edit { background: #4783d7; }
+    .btn-del  { background: #e74c3c; border: none; cursor: pointer; }
+    .acoes { display: flex; gap: 8px; align-items: center; }
+  </style>
+</head>
+<body>
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+    <a href="{{ url_for('cadastro_regra') }}">← Voltar</a>
+    <h2>Regras Salvas</h2>
+  </div>
+
+  {% with msgs = get_flashed_messages(category_filter=['success','error']) %}
+    {% for m in msgs %}
+      <div>{{ m }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if regras %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Função</th>
+          <th>Produto</th>
+          <th class="col-fibra">Fibra</th>
+          <th>% Inicial</th>
+          <th>% Final</th>
+          <th>Qtd</th>
+          <th>Unid</th>
+          <th>Especial</th>
+          <th>Corante</th>
+          <th>Criado</th>
+          <th style="width:160px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in regras %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ r.funcao }}</td>
+            <td>{{ r.produto.nome if r.produto else '-' }}</td>
+
+            <!-- Fibra completa: tipo – nome 96% TIPO / 4% PUE -->
+            <td class="col-fibra">
+              {% if r.fibra %}
+                {{ r.fibra.tipo }} – {{ r.fibra.nome }}
+                {% if r.fibra.perc_fibra is not none %}
+                  {{ ' %.0f%% ' | format(r.fibra.perc_fibra) }}{{ r.fibra.tipo }}
+                {% endif %}
+                {% if r.fibra.perc_elastano and r.fibra.perc_elastano > 0 %}
+                  {{ ' / %.0f%% PUE' | format(r.fibra.perc_elastano) }}
+                {% endif %}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>{{ '%.3f'|format(r.pct_corante_ini) }}</td>
+            <td>{{ '%.3f'|format(r.pct_corante_fim) }}</td>
+            <td>
+              {% if r.regra_especial_corante and r.resultado_novo is not none %}
+                {{ '%.3f'|format(r.resultado_novo) }}
+              {% else %}
+                {{ '%.3f'|format(r.qtde_produto) }}
+              {% endif %}
+            </td>
+            <td>{{ r.unidade if r.unidade else '%' }}</td>
+            <td>
+              {% if r.regra_especial_corante %}
+                <span class="badge">Sim</span>
+              {% else %}
+                Não
+              {% endif %}
+            </td>
+            <td>
+              {% if r.regra_especial_corante %}
+                {{ r.corante.nome if r.corante else '-' }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>{{ r.criado_em.strftime('%d/%m/%Y %H:%M') if r.criado_em else '' }}</td>
+            <td>
+              <div class="acoes">
+                <a class="btn btn-edit" href="{{ url_for('cadastro_regra', id=r.id) }}">Editar</a>
+                <form method="post"
+                      action="{{ url_for('excluir_regra', regra_id=r.id) }}"
+                      onsubmit="return confirm('Excluir esta regra?');"
+                      style="margin:0;">
+                  <button type="submit" class="btn btn-del">Excluir</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>(Nenhuma regra cadastrada.)</p>
+  {% endif %}
+</body>
+</html>
